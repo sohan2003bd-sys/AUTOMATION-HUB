@@ -65,7 +65,13 @@ def make_script(cfg, store, cat, rec, spath):
     if info["rejected"]:
         store.update(rec["id"], status="rejected", error=("ফ্যাক্ট-চেক: " + info["rejected"])[:300])
         raise Rejected(f"বিষয় বাতিল (যাচাইয়ে টেকেনি): {info['rejected']}")
-    script = scriptgen.generate(cfg, cat, rec, info["facts"])
+    if research.enabled(cfg) and not info["facts"] and not cat.get("evergreen", True):
+        # আজকের-খবরভিত্তিক বিষয়ে কোনো সূত্র মেলেনি — মডেলের আন্দাজে ভিডিও বানানো ঝুঁকিপূর্ণ
+        msg = "কোনো সূত্র/শিরোনাম মেলেনি, তাই আজকের খবরভিত্তিক এই বিষয় বাদ"
+        store.update(rec["id"], status="rejected", error=msg)
+        raise Rejected(msg)
+    made = sum(1 for r in store.rows if r["status"] in ("rendered", "uploaded"))
+    script = scriptgen.generate(cfg, cat, rec, info["facts"], variant=made)
     try:
         script, notes = research.verify(cfg, script, info["facts"])
     except RuntimeError as e:

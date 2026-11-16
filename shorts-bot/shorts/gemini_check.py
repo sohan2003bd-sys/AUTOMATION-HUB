@@ -6,7 +6,7 @@ import sys
 
 import requests
 
-from . import llm
+from . import llm, news
 
 BASE = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -61,6 +61,10 @@ def run(cfg) -> int:
                 summary[(i, m, label)] = st
                 print(f"  {m} [{label}] → {st}: {msg}")
         print()
+    print("---- সংবাদ-শিরোনাম (Google News RSS) পরীক্ষা ----")
+    for label, q in (("শীর্ষ খবর", ""), ("টাকা-পয়সা", ((cfg.get("news") or {}).get("queries") or {}).get("money", ""))):
+        heads = news.fetch(cfg, q, 5)
+        print(f"  {label}: {len(heads)}টি শিরোনাম" + (f" — প্রথমটি: {heads[0]['title'][:70]} ({heads[0]['source']})" if heads else ""))
     print("---- সারসংক্ষেপ ----")
     for m in models:
         for label in ("সাধারণ", "গুগল-সার্চসহ"):

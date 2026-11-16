@@ -40,6 +40,11 @@ class Store:
             o = norm(old)
             if o == n or difflib.SequenceMatcher(None, o, n).ratio() >= 0.85:
                 return True
+        # অন্য ক্যাটাগরিতেও একই খবর/বিষয় যেন না আসে (যেমন 'আলোচিত' ও 'বিশ্ব')
+        others = [r["topic"] for r in self.rows if r["category"] != category][-150:]
+        for old in others:
+            if difflib.SequenceMatcher(None, norm(old), n).ratio() >= 0.8:
+                return True
         return False
 
     def add_topics(self, category, topics):
@@ -86,10 +91,11 @@ class Store:
 
     def pending(self, status, n, category=None):
         """ক্যাটাগরিগুলোর মধ্যে ঘুরিয়ে-ফিরিয়ে (ব্যালান্স রেখে) n টি বাছে।"""
-        done = {}
-        for r in self.rows:
+        done, last = {}, {}
+        for i, r in enumerate(self.rows):
             if r["status"] in ("rendered", "uploaded"):
                 done[r["category"]] = done.get(r["category"], 0) + 1
+                last[r["category"]] = i
         queues = {}
         for r in self.rows:
             if r["status"] == status and (category is None or r["category"] == category):
@@ -99,7 +105,7 @@ class Store:
             avail = [c for c, q in queues.items() if q]
             if not avail:
                 break
-            c = min(avail, key=lambda x: done.get(x, 0))
+            c = min(avail, key=lambda x: (done.get(x, 0), last.get(x, -1)))  # কম হয়েছে, আর সবচেয়ে আগে হয়েছে—সেটা আগে
             picked.append(queues[c].pop(0))
             done[c] = done.get(c, 0) + 1
         return picked

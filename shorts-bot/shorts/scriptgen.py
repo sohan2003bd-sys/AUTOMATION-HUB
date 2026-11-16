@@ -14,6 +14,15 @@ HOOK_STYLES = [
     "একটা ছোট, ধারালো বাক্যে ঘটনাটা বলে শুরু, তারপর 'কিন্তু আসল কথা হলো…'",
 ]
 
+FORMATS = [
+    "প্রশ্ন-উত্তর ধাঁচে: দর্শকের মনের প্রশ্ন তুলে একে একে সরল উত্তর",
+    "মিথ বনাম সত্য: প্রচলিত ভুল ধারণা বনাম আসল তথ্য",
+    "তিনটি জরুরি কথা: সংখ্যা ধরে ধরে সাজানো (এক, দুই, তিন)",
+    "ছোট গল্পের মতো: একটা বাস্তব পরিস্থিতি দিয়ে শুরু করে শিক্ষায় শেষ",
+    "সতর্কবার্তা: কী ঘটছে, কীভাবে চিনবেন, কী করবেন",
+    "আগে-পরে তুলনা: আগে কী ছিল, এখন কী বদলেছে, তাতে আপনার কী",
+]
+
 SYSTEM = (
     "তুমি বাংলাদেশি দর্শকদের জন্য YouTube Shorts-এর স্ক্রিপ্ট লেখক—একজন আত্মবিশ্বাসী, বুদ্ধিদীপ্ত উপস্থাপকের মতো, "
     "যিনি জটিল বিষয় সহজ কথ্য বাংলায় পরিষ্কার করে বোঝান। বইয়ের ভাষা নয়, সাজানো কিন্তু স্বাভাবিক কথোপকথনের ভাষা; "
@@ -29,9 +38,12 @@ SYSTEM = (
 )
 
 
-def build_prompt(cfg, cat, topic, seed, facts=None):
+def build_prompt(cfg, cat, topic, seed, facts=None, variant=None):
     rnd = random.Random(seed)
-    hook_style = rnd.choice(HOOK_STYLES)
+    if variant is None:
+        hook_style, fmt = rnd.choice(HOOK_STYLES), rnd.choice(FORMATS)
+    else:  # পরপর ভিডিওতে হুক ও ফরম্যাট ঘুরে ঘুরে বদলায়, একই ছাঁচ পরপর আসে না
+        hook_style, fmt = HOOK_STYLES[variant % len(HOOK_STYLES)], FORMATS[variant % len(FORMATS)]
     lo, hi = cfg["script"]["min_words"], cfg["script"]["max_words"]
     fact_block = ""
     if facts:
@@ -39,6 +51,7 @@ def build_prompt(cfg, cat, topic, seed, facts=None):
     return (
         f"ক্যাটাগরি: {cat['name']}\nবিষয়: {topic}\n\n{fact_block}"
         f"এই বিষয়ে প্রায় {cfg['script']['target_seconds']} সেকেন্ডের একটা Shorts-এর স্ক্রিপ্ট লেখো।\n"
+        f"- ভিডিওর ফরম্যাট: {fmt}।\n"
         f"- হুক (প্রথম দৃশ্য): {hook_style}। প্রথম তিন সেকেন্ডেই দর্শককে ধরে রাখতে হবে।\n"
         f"- মোট ৫–৮টি দৃশ্য। সব দৃশ্যের narration মিলিয়ে {lo}–{hi}টি শব্দ।\n"
         "- গঠন: হুক → কী ঘটেছে/কী জানা দরকার → কেন গুরুত্বপূর্ণ (দর্শকের জীবনে প্রভাব) → কী করা উচিত → এক লাইনের সারকথা।\n"
@@ -89,10 +102,10 @@ def validate(cfg, d):
             "tags": tags, "tone": tone if tone in TONES else "warm", "scenes": scenes}
 
 
-def generate(cfg, cat, rec, facts=None):
+def generate(cfg, cat, rec, facts=None, variant=None):
     last = None
     for attempt in range(cfg["script"]["max_retries"]):
-        prompt = build_prompt(cfg, cat, rec["topic"], f"{rec['id']}-{attempt}", facts)
+        prompt = build_prompt(cfg, cat, rec["topic"], f"{rec['id']}-{attempt}", facts, variant)
         try:
             raw = llm.complete(cfg, SYSTEM, prompt, max_tokens=3500, temperature=0.9)
             return validate(cfg, extract_json(raw))

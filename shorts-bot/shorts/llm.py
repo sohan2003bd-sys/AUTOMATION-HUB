@@ -261,6 +261,8 @@ def complete_grounded(cfg, system, user, max_tokens=3000, temperature=0.4):
     """গুগল সার্চে যাচাই করা (grounded) উত্তর। শুধু Gemini-তে চলে। ফেরত: (লেখা, উৎসের তালিকা)।"""
     if cfg["llm"]["provider"] != "gemini":
         raise LLMError("ওয়েব গবেষণা শুধু Gemini provider-এ চলে", fatal=False, kind="other")
+    if not cfg["llm"].get("grounding", True):  # config-এ বন্ধ: কোনো অনুরোধই যায় না
+        raise LLMError("গুগল-সার্চ (llm.grounding) বন্ধ করা আছে", fatal=False, kind="grounding")
     if _GROUND["down"]:  # একবার 429 পেলে বাকি রানে আর চেষ্টা নয় (সময় ও অনুরোধ বাঁচে)
         raise LLMError("গুগল-সার্চ (গ্রাউন্ডিং) এই রানে বন্ধ — আগেই কোটা-সমস্যা পাওয়া গেছে", fatal=False, kind="grounding")
     llm_cfg = cfg["llm"]

@@ -2,7 +2,7 @@
 import sys
 from datetime import datetime, timedelta, timezone
 
-from . import llm
+from . import llm, news
 from .llm import extract_json
 from .research import _bullets
 
@@ -65,6 +65,31 @@ def _plain(cfg, store, cat, count):
     return [i for i in items if isinstance(i, str)]
 
 
+def _from_news(cfg, store, cat, count):
+    """আজকের আসল শিরোনাম (Google News RSS) দেখে আইডিয়া — গুগল-সার্চ ছাড়াই টাটকা ও সত্যিকার বিষয়।"""
+    if not news.enabled(cfg):
+        return []
+    q = ((cfg.get("news") or {}).get("queries") or {}).get(cat["id"], "")
+    heads = news.fetch(cfg, q, 15)
+    if len(heads) < 3:
+        return []
+    block = "\n".join(f"- {h['title']} ({h['source']}, {h['date']})" for h in heads)
+    user = (
+        f"আজকের তারিখ: {today(cfg)}।\nক্যাটাগরি: {cat['name']}\nপরিধি: {cat['hint']}\n\n"
+        f"নিচে আজকের আসল সংবাদ-শিরোনাম:\n{block}\n\n"
+        f"এই শিরোনামগুলো থেকে দর্শকের জন্য সবচেয়ে কাজের, একে অন্যের থেকে আলাদা ঠিক {count}টি ভিডিও-আইডিয়া বানাও। "
+        "প্রতিটি একটা বাক্যে, বাংলায়, শিরোনামের আসল ঘটনা/নাম সহ—শিরোনামে নেই এমন কোনো তথ্য নিজে থেকে যোগ করবে না। "
+        "দলীয় রাজনীতির পক্ষ-বিপক্ষ, সহিংসতা বা গুজব বাদ দেবে।\n\n"
+        f"এগুলোর মতো বা কাছাকাছি দেবে না:\n{_avoid(store, cat)}\n\n"
+        'ফরম্যাট: ["আইডিয়া ১", "আইডিয়া ২", ...]'
+    )
+    try:
+        items = extract_json(llm.complete(cfg, SYSTEM, user, max_tokens=4000, temperature=1.0, task="ideas"))
+    except ValueError:
+        return []
+    return [i for i in items if isinstance(i, str)] if isinstance(items, list) else []
+
+
 def generate_for_category(cfg, store, cat, count):
     items = []
     no_search = False
@@ -75,7 +100,12 @@ def generate_for_category(cfg, store, cat, count):
             if e.fatal:
                 raise
             no_search = True
-            print(f"  ⚠ আজকের আলোচিত বিষয় খোঁজা যায়নি ({e}); সাধারণ আইডিয়ায় যাচ্ছি", file=sys.stderr)
+            if e.kind == "grounding":
+                print("  ℹ গুগল-সার্চ বন্ধ — আজকের সংবাদ-শিরোনাম থেকে আইডিয়া নিচ্ছি", file=sys.stderr)
+            else:
+                print(f"  ⚠ আজকের আলোচিত বিষয় খোঁজা যায়নি ({e}); সাধারণ আইডিয়ায় যাচ্ছি", file=sys.stderr)
+    if not items and (no_search or not (cfg.get("ideas") or {}).get("trending")):
+        items = _from_news(cfg, store, cat, count)
     if not items:
         # সার্চ ছাড়া মডেল আজকের খবর জানে না, গুজব/ভুল বানাতে পারে — তাই টাটকা-থাকা-দরকার ক্যাটাগরি বাদ
         # (ইচ্ছা করলে config-এ ideas.allow_news_without_search: true)

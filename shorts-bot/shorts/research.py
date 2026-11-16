@@ -11,7 +11,7 @@ import re
 import sys
 from urllib.parse import urlparse
 
-from . import llm
+from . import llm, news
 from .llm import extract_json
 
 RESEARCH_SYSTEM = (
@@ -80,6 +80,10 @@ def gather(cfg, cat, topic):
     try:
         text, sources = llm.complete_grounded(cfg, RESEARCH_SYSTEM, user, max_tokens=2500)
     except llm.LLMError as e:
+        alt = news.facts_for(cfg, topic)  # গুগল-সার্চ না চললে আসল সংবাদ-শিরোনাম থেকে তথ্য
+        if alt:
+            print("  ℹ গুগল-সার্চ নেই; সংবাদ-শিরোনাম থেকে তথ্য নেওয়া হলো", file=sys.stderr)
+            return alt
         if rc.get("strict"):
             raise
         print(f"  ⚠ গবেষণা বাদ ({e})", file=sys.stderr)

@@ -17,6 +17,8 @@ def cfg_g():
     cfg = config.load()
     cfg["llm"]["provider"] = "gemini"
     cfg["research"] = {"enabled": True, "verify": True, "strict": False}
+    cfg["news"] = {"enabled": False}  # পরীক্ষায় আসল নেটওয়ার্ক নয়
+    cfg["llm"]["grounding"] = True    # এই পরীক্ষাগুলো গুগল-সার্চ পথ যাচাই করে
     return cfg
 
 

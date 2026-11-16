@@ -2,7 +2,9 @@ name: shorts-daily
 
 on:
   schedule:
-    - cron: "0 2 * * *"        # প্রতিদিন UTC ০২:০০ = বাংলাদেশ সকাল ০৮:০০
+    # প্রতি ২ ঘণ্টায় ১টি ভিডিও, দিনে ১০টি: UTC ০০,০২,…,১৮ = বাংলাদেশ সকাল ০৬ থেকে রাত ১২টা (১২টা বাদে ১০টি রান)
+    # (GitHub কখনো ১০–৩০ মিনিট দেরিতে চালায়; সময়টা হুবহু নয়)
+    - cron: "0 0-18/2 * * *"
   workflow_dispatch:
     inputs:
       count:
@@ -73,7 +75,7 @@ jobs:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-          COUNT: ${{ github.event.inputs.count || '2' }}
+          COUNT: ${{ github.event.inputs.count || '1' }}
           PRIVACY: ${{ github.event.inputs.privacy || 'config' }}
         run: |
           ARGS=""
