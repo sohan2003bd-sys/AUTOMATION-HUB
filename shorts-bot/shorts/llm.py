@@ -8,31 +8,66 @@ import requests
 
 
 class LLMError(RuntimeError):
-    pass
+    """fatal=True মানে আবার চেষ্টা করে লাভ নেই (কী ভুল/নেই, মডেলের নাম ভুল, কোটা শেষ)।"""
+
+    def __init__(self, msg, fatal=False):
+        super().__init__(msg)
+        self.fatal = fatal
+
+
+def _redact(text) -> str:
+    """ত্রুটির লেখা থেকে API কী মুছে দেয় (Gemini কী URL-এ থাকে, তাই লগে ঢুকে যেতে পারে)।"""
+    return re.sub(r"(key=)[^&\s'\"]+", r"\1***", str(text))
+
+
+def _explain(status, text):
+    """HTTP ত্রুটি → সহজ বাংলা কারণ ও সমাধান। ফেরত: (বার্তা, fatal)"""
+    t = (text or "").lower()
+    if "credit balance" in t or "billing" in t:
+        return "AI অ্যাকাউন্টে ক্রেডিট/বিলিং নেই। অ্যাকাউন্টে ক্রেডিট যোগ করুন বা Gemini (ফ্রি) ব্যবহার করুন", True
+    if status in (400, 401, 403) and any(k in t for k in ("api key", "api_key", "x-api-key", "authentication",
+                                                             "unauthenticated", "permission")):
+        return ("API কী ভুল বা কাজ করছে না। নতুন কী বানিয়ে GitHub Secrets-এ আবার বসান "
+                "(শুরু/শেষে যেন স্পেস বা নতুন লাইন না থাকে)"), True
+    if status == 404:
+        return "মডেলের নাম ভুল বা এই কী দিয়ে মডেলটি পাওয়া যায় না। config.yaml-এর মডেলের নাম দেখুন", True
+    if status == 429:
+        return "ফ্রি কোটা বা রেট লিমিট শেষ। কিছুক্ষণ পরে বা পরদিন আবার চালান", True
+    if status is not None and status >= 500:
+        return "AI সার্ভারে সাময়িক সমস্যা। একটু পরে আবার চালান", False
+    if status == 400:
+        return "AI-এর কাছে পাঠানো অনুরোধে সমস্যা", False
+    if status is None:
+        return "ইন্টারনেট/নেটওয়ার্ক সমস্যা", False
+    return "AI থেকে অপ্রত্যাশিত উত্তর", False
 
 
 def _post(url, headers, body, retries=4):
-    last = None
+    last, status, text = None, None, ""
     for i in range(retries):
         try:
             r = requests.post(url, headers=headers, json=body, timeout=120)
             if r.status_code == 200:
                 return r.json()
-            last = f"HTTP {r.status_code}: {r.text[:300]}"
-            if r.status_code not in (408, 409, 429, 500, 502, 503, 529):
+            status, text = r.status_code, r.text[:300]
+            last = f"HTTP {status}: {text}"
+            if status not in (408, 409, 429, 500, 502, 503, 529):
                 break
         except requests.RequestException as e:  # নেটওয়ার্ক সমস্যা
-            last = str(e)
-        time.sleep(2 ** (i + 1))
-    raise LLMError(last or "অজানা ত্রুটি")
+            status, text, last = None, "", f"নেটওয়ার্ক: {e}"
+        if i < retries - 1:
+            time.sleep(2 ** (i + 1))
+    why, fatal = _explain(status, text)
+    raise LLMError(_redact(f"{why} [{last or 'অজানা ত্রুটি'}]"), fatal=fatal)
 
 
 def complete(cfg, system, user, max_tokens=4000, temperature=0.9) -> str:
     provider = cfg["llm"]["provider"]
     if provider == "anthropic":
-        key = os.environ.get("ANTHROPIC_API_KEY")
+        key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
         if not key:
-            raise LLMError("ANTHROPIC_API_KEY সেট করা নেই")
+            raise LLMError("ANTHROPIC_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
+                           "ANTHROPIC_API_KEY নামে কী যোগ করুন (অথবা config.yaml-এ provider: gemini দিন)", fatal=True)
         data = _post(
             "https://api.anthropic.com/v1/messages",
             {"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
@@ -46,9 +81,10 @@ def complete(cfg, system, user, max_tokens=4000, temperature=0.9) -> str:
         )
         return "".join(b.get("text", "") for b in data.get("content", []))
     if provider == "gemini":
-        key = os.environ.get("GEMINI_API_KEY")
+        key = os.environ.get("GEMINI_API_KEY", "").strip()
         if not key:
-            raise LLMError("GEMINI_API_KEY সেট করা নেই")
+            raise LLMError("GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
+                           "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন)", fatal=True)
         model = cfg["llm"]["gemini_model"]
         data = _post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
@@ -64,7 +100,7 @@ def complete(cfg, system, user, max_tokens=4000, temperature=0.9) -> str:
             return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
         except (KeyError, IndexError):
             raise LLMError(f"Gemini থেকে খালি উত্তর: {str(data)[:300]}")
-    raise LLMError(f"অজানা provider: {provider}")
+    raise LLMError(f"অজানা provider: {provider} (config.yaml-এ anthropic বা gemini লিখুন)", fatal=True)
 
 
 def extract_json(text: str):

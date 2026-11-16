@@ -10,8 +10,19 @@
 import argparse
 import sys
 
-from . import config, ideas, pipeline, runner, samples, youtube
+from . import config, ideas, pipeline, report, runner, samples, youtube
 from .store import Store
+
+
+def _write_summary(ok, bad, stopped, info):
+    """GitHub Actions-এর Summary পাতায় ফলাফল (সফল হলে লিংক, ব্যর্থ হলে কারণ)।"""
+    icon = "✅" if ok and not stopped else "❌"
+    lines = [f"## {icon} সফল {ok}, ব্যর্থ {bad}"]
+    for topic, url, privacy in info["links"]:
+        lines.append(f"- ✅ [{topic}]({url}) — {privacy}")
+    for p in info["problems"]:
+        lines.append(f"- ❌ {p}")
+    report.summary("\n".join(lines))
 
 
 def main(argv=None):
@@ -76,14 +87,24 @@ def main(argv=None):
             print("সতর্কতা: youtube.upload অনুমতি নেই", file=sys.stderr)
             sys.exit(1)
     elif a.cmd == "run":
+        info = {"problems": [], "links": []}
         try:
-            ok, bad, stopped = runner.run(cfg, store, a.count, a.privacy, a.tts, not a.no_upload)
-        except youtube.YouTubeError as e:
+            ok, bad, stopped = runner.run(cfg, store, a.count, a.privacy, a.tts, not a.no_upload, info)
+        except (runner.RunError, youtube.YouTubeError) as e:
+            # কোনো ভিডিও হয়নি → রান লাল হবে, কারণ Summary পাতায় লেখা থাকবে
+            title = "ইউটিউব সমস্যা" if isinstance(e, youtube.YouTubeError) else "ভিডিও বানানো যায়নি"
             print("থেমে গেছে:", e, file=sys.stderr)
+            report.error(title, str(e))
+            report.summary(f"## ❌ {title}\n\n{e}")
             sys.exit(1)
         print(f"সারসংক্ষেপ: সফল {ok}, ব্যর্থ {bad}")
-        if stopped or (bad and not ok):
+        _write_summary(ok, bad, stopped, info)
+        if stopped or ok == 0:
+            first = info["problems"][0] if info["problems"] else "কোনো ভিডিও তৈরি বা আপলোড হয়নি"
+            report.error("ভিডিও হয়নি" if ok == 0 else "মাঝপথে থেমে গেছে", first)
             sys.exit(1)
+        if bad:
+            report.warning(f"{bad}টি ভিডিও হয়নি", info["problems"][0])
     elif a.cmd == "status":
         for c in cfg["categories"]:
             print(f"{c['name']:<24}", store.counts().get(c["id"], {}))

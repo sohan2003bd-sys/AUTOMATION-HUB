@@ -5,14 +5,20 @@ import sys
 import time
 from datetime import datetime, timezone
 
-from . import config, ideas, pipeline, youtube
+from . import config, ideas, llm, pipeline, report, youtube
+
+
+class RunError(RuntimeError):
+    """কোনো ভিডিও বানানোই সম্ভব হয়নি — মেসেজে কারণ ও সমাধান থাকে।"""
 
 
 def refill(cfg, store, count):
-    """বাকি আইডিয়া কমে গেলে নতুন আইডিয়া বানায় (প্রায় ২ দিনের জোগান রাখে)।"""
+    """বাকি আইডিয়া কমে গেলে নতুন আইডিয়া বানায় (প্রায় ২ দিনের জোগান রাখে)।
+    ফেরত: ত্রুটির তালিকা (কিছু ব্যর্থ হলে)।"""
+    errors = []
     left = sum(1 for r in store.rows if r["status"] in ("idea", "scripted"))
     if left >= count * 2:
-        return
+        return errors
     cats = cfg["categories"]
     per = max(3, math.ceil(count * 5 / len(cats)))
     for c in cats:
@@ -21,6 +27,10 @@ def refill(cfg, store, count):
             print(f"আইডিয়া: {c['name']} +{n}")
         except Exception as e:
             print(f"আইডিয়া ব্যর্থ: {c['name']} — {e}", file=sys.stderr)
+            errors.append(str(e))
+            if isinstance(e, llm.LLMError) and e.fatal:
+                break  # কী/কোটা/মডেলের সমস্যা — বাকি ক্যাটাগরিতেও একই হবে, সময় নষ্ট নয়
+    return errors
 
 
 def _last_publish(store):
@@ -35,8 +45,13 @@ def _last_publish(store):
     return best
 
 
-def run(cfg, store, count, privacy=None, engine=None, upload=True):
-    """ফেরত: (সফল, ব্যর্থ, থামানো_হয়েছে)"""
+def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
+    """ফেরত: (সফল, ব্যর্থ, থামানো_হয়েছে)
+    কোনো ভিডিও বানানোর সুযোগই না থাকলে RunError ছোড়ে (যাতে রান সবুজ না হয়)।
+    info দিলে (dict) তাতে "problems" ও "links" তালিকা ভরা হয়।"""
+    info = info if info is not None else {}
+    problems = info.setdefault("problems", [])
+    links = info.setdefault("links", [])
     out = config.out_dir(cfg)
     mode = privacy or cfg["upload"].get("privacy", "private")
     if mode not in ("private", "public", "unlisted", "schedule"):
@@ -51,13 +66,16 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True):
             r["status"] = "scripted"
     store.save()
 
-    refill(cfg, store, count)
+    refill_errors = refill(cfg, store, count)
     todo = store.pending("scripted", count)
     if len(todo) < count:
         todo += store.pending("idea", count - len(todo))
     if not todo:
-        print("কোনো আইডিয়া বাকি নেই।")
-        return 0, 0, False
+        if refill_errors:
+            raise RunError("নতুন ভিডিওর আইডিয়া বানানো যায়নি, তাই কোনো ভিডিও হয়নি। কারণ: " + refill_errors[0])
+        raise RunError("কোনো ভিডিওর আইডিয়া বাকি নেই এবং AI নতুন আইডিয়াও দেয়নি। আবার চালিয়ে দেখুন।")
+    if refill_errors:
+        report.warning("নতুন আইডিয়া বানানো যায়নি", refill_errors[0] + " (আগের জমানো আইডিয়া দিয়ে চলছে)")
 
     slots = []
     if upload and mode == "schedule":
@@ -72,6 +90,7 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True):
         except Exception as e:
             store.update(rec["id"], error=str(e)[:300])
             print("  বানাতে ব্যর্থ:", e, file=sys.stderr)
+            problems.append(f"বানাতে ব্যর্থ — {rec['topic']}: {e}")
             bad += 1
             continue
         if not upload:
@@ -86,6 +105,7 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True):
         except youtube.YouTubeError as e:
             store.update(rec["id"], status="scripted", error=str(e)[:300])
             print("  আপলোড ব্যর্থ:", e, file=sys.stderr)
+            problems.append(f"আপলোড ব্যর্থ — {rec['topic']}: {e}")
             bad += 1
             if e.fatal:
                 stopped = True
@@ -97,6 +117,7 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True):
         for p in (video, out / f"{rec['id']}.json"):
             p.unlink(missing_ok=True)
         ok += 1
+        links.append((rec["topic"], f"https://youtube.com/shorts/{res['id']}", res["privacy"]))
         line = f"  আপলোড হয়েছে: https://youtube.com/shorts/{res['id']}  ({res['privacy']}"
         line += f", প্রকাশ: {res['publish_at']})" if res["publish_at"] else ")"
         print(line)

@@ -75,6 +75,10 @@ def generate(cfg, cat, rec):
         try:
             raw = llm.complete(cfg, SYSTEM, prompt, max_tokens=3500, temperature=0.9)
             return validate(cfg, extract_json(raw))
-        except (ValueError, llm.LLMError) as e:
+        except llm.LLMError as e:
+            if e.fatal:  # কী/কোটা/মডেলের সমস্যা — আবার চেষ্টা করে লাভ নেই
+                raise RuntimeError(f"স্ক্রিপ্ট বানানো যায়নি: {e}")
+            last = e
+        except ValueError as e:
             last = e
     raise RuntimeError(f"স্ক্রিপ্ট বানানো যায়নি: {last}")
