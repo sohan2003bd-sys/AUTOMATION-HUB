@@ -41,12 +41,93 @@ def find_font(cfg) -> str:
                             "(Ubuntu: sudo apt install fonts-noto-core) অথবা config.yaml-এ video.font দিন।")
 
 
-def load_font(cfg, size):
-    path = find_font(cfg)
+LATIN_CANDIDATES = [
+    "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "C:/Windows/Fonts/arialbd.ttf",
+    "/Library/Fonts/Arial Bold.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+]
+
+
+def find_latin_font(cfg):
+    """ইংরেজি অক্ষরের ফন্ট (Noto Sans Bengali-তে ইংরেজি অক্ষর নেই, তাই আলাদা ফন্ট লাগে)। না পেলে None।"""
+    cands = [os.environ.get("SHORTS_LATIN_FONT"), cfg["video"].get("latin_font")] + LATIN_CANDIDATES
+    for c in cands:
+        if c and Path(c).exists():
+            return c
+    try:
+        out = subprocess.run(["fc-match", "-f", "%{file}", "Noto Sans:bold"],
+                             capture_output=True, text=True).stdout
+        if out and Path(out).exists():
+            return out
+    except FileNotFoundError:
+        pass
+    return None
+
+
+def _is_bn(ch):
+    o = ord(ch)
+    return 0x0980 <= o <= 0x09FF or o in (0x200C, 0x200D, 0x0964, 0x0965)
+
+
+def split_runs(text):
+    """লেখাকে (বাংলা?, অংশ) টুকরোয় ভাগ করে। বাংলা বাদে সব (ইংরেজি, সংখ্যা, চিহ্ন) ইংরেজি ফন্টে যায়;
+    ফাঁকা জায়গা আগের টুকরোর সঙ্গে থাকে।"""
+    runs = []
+    for ch in text:
+        if ch == " " and runs:
+            runs[-1][1] += ch
+            continue
+        bn = _is_bn(ch)
+        if runs and runs[-1][0] == bn:
+            runs[-1][1] += ch
+        else:
+            runs.append([bn, ch])
+    return [(bn, t) for bn, t in runs]
+
+
+class MixedFont:
+    """বাংলা অংশ বাংলা ফন্টে, বাকি সব ইংরেজি ফন্টে আঁকে (একই বেসলাইনে)।"""
+
+    def __init__(self, bn, latin):
+        self.bn, self.latin = bn, latin or bn
+
+    def _f(self, is_bn):
+        return self.bn if is_bn else self.latin
+
+    def getlength(self, text):
+        return sum(self._f(b).getlength(t) for b, t in split_runs(text))
+
+    def draw(self, d, xy, text, **kw):
+        x, y = xy
+        base = y + self.bn.getmetrics()[0]
+        for b, t in split_runs(text):
+            f = self._f(b)
+            d.text((x, base), t, font=f, anchor="ls", **kw)
+            x += f.getlength(t)
+
+
+def draw_text(d, xy, text, font, **kw):
+    if isinstance(font, MixedFont):
+        font.draw(d, xy, text, **kw)
+    else:
+        d.text(xy, text, font=font, **kw)
+
+
+def _truetype(path, size):
     if features.check("raqm"):
         return ImageFont.truetype(path, size, layout_engine=ImageFont.Layout.RAQM)
     warnings.warn("Pillow-তে Raqm নেই: বাংলা যুক্তাক্ষর ভেঙে যেতে পারে (libraqm0, libfribidi0 ইনস্টল করুন)")
     return ImageFont.truetype(path, size)
+
+
+def load_font(cfg, size):
+    bn = _truetype(find_font(cfg), size)
+    lp = find_latin_font(cfg)
+    return MixedFont(bn, _truetype(lp, size) if lp else None)
 
 
 def bn_digits(n: int) -> str:
@@ -110,7 +191,7 @@ def draw_frame(cfg, cat, scene, idx, total, step_no, handle):
     label = cat["name"]
     tw = f_chip.getlength(label)
     d.rounded_rectangle([px(60), px(130), px(60) + tw + px(60), px(130) + px(88)], radius=px(44), fill=accent)
-    d.text((px(60) + px(30), px(130) + px(18)), label, font=f_chip, fill=(255, 255, 255))
+    draw_text(d, (px(60) + px(30), px(130) + px(18)), label, f_chip, fill=(255, 255, 255))
 
     # মূল লেখা (সাইজ নিজে নিজে ঠিক হয়)
     max_w = W - px(160)
@@ -129,18 +210,18 @@ def draw_frame(cfg, cat, scene, idx, total, step_no, handle):
         d.ellipse([cx - r, cyb - r, cx + r, cyb + r], fill=accent)
         fb = load_font(cfg, px(96))
         t = bn_digits(step_no)
-        d.text((cx - fb.getlength(t) / 2, cyb - px(72)), t, font=fb, fill=(255, 255, 255))
+        draw_text(d, (cx - fb.getlength(t) / 2, cyb - px(72)), t, fb, fill=(255, 255, 255))
     for i, ln in enumerate(lines):
         x = (W - font.getlength(ln)) / 2
-        d.text((x, top + i * line_h), ln, font=font, fill=(255, 255, 255),
-               stroke_width=px(2), stroke_fill=(0, 0, 0))
+        draw_text(d, (x, top + i * line_h), ln, font, fill=(255, 255, 255),
+                  stroke_width=px(2), stroke_fill=(0, 0, 0))
     ybar = top + block_h + px(30)
     d.rounded_rectangle([W / 2 - px(90), ybar, W / 2 + px(90), ybar + px(14)], radius=px(7), fill=accent)
 
     # নিচে হ্যান্ডেল
     if handle:
         fh = load_font(cfg, px(46))
-        d.text(((W - fh.getlength(handle)) / 2, H - px(190)), handle, font=fh, fill=(205, 212, 230))
+        draw_text(d, ((W - fh.getlength(handle)) / 2, H - px(190)), handle, fh, fill=(205, 212, 230))
     return img
 
 
