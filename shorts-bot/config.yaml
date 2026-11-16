@@ -18,20 +18,17 @@ research:
   verify: true                 # স্ক্রিপ্ট লেখার পর প্রতিটি দাবি আবার মিলিয়ে দেখা, ভুল থাকলে ঠিক করা
   strict: false                # true হলে গবেষণা/যাচাই ব্যর্থ হলে ভিডিও বানানো বন্ধ; false হলে বাদ দিয়ে চলে
 
-# ---- আসল ফুটেজ ও ছবি (PEXELS_API_KEY ও/অথবা PIXABAY_API_KEY লাগবে; না থাকলে ডিজাইন-ব্যাকগ্রাউন্ড) ----
+# ---- আসল ফুটেজ ও ছবি (PEXELS / PIXABAY / UNSPLASH কী — যেকোনো একটা হলেই চলে; Lorem Picsum কী ছাড়াই শেষ ভরসা; কিছুই না থাকলে ডিজাইন-ব্যাকগ্রাউন্ড) ----
 media:
   enabled: true
   prefer: video                # video (প্রথমে ফুটেজ, না মিললে ছবি) | photo
   min_clip_seconds: 3
+  picsum_fallback: false       # true = সব স্টক সাইটে না মিললে Lorem Picsum-এর এলোমেলো ছবি (কিওয়ার্ড মেলে না, তাই ডিফল্ট বন্ধ)
 
 tts:
-  engine: gemini               # gemini (স্বাভাবিক, আবেগময় কণ্ঠ) | edge (বিনামূল্যের বাংলা ভয়েস) | silent (শুধু পরীক্ষা)
-  fallback: edge               # প্রধান engine-এ কোটা/সমস্যা হলে পুরো ভিডিও এটা দিয়ে বানানো হয়
-  gemini_model: gemini-2.5-flash-preview-tts
-  gemini_voice: Kore           # অন্য কণ্ঠ: Puck, Charon, Aoede, Leda, Orus, Zephyr ইত্যাদি
-  gemini_style: "Say in clear, natural, friendly Bengali, like an enthusiastic tech teacher explaining a useful tip"
-  voice: bn-BD-NabanitaNeural  # edge-এর কণ্ঠ। নারী: Nabanita, পুরুষ: bn-BD-PradeepNeural
-  rate: "+0%"                  # edge-এর গতি, যেমন "-5%" বা "+8%"
+  engine: edge                 # edge (বিনামূল্যের Microsoft Edge বাংলা ভয়েস) | silent (শুধু পরীক্ষা)
+  voice: bn-BD-NabanitaNeural  # নারী: bn-BD-NabanitaNeural, পুরুষ: bn-BD-PradeepNeural
+  rate: "+0%"                  # গতি, যেমন "-5%" বা "+8%"
   pitch: "+0Hz"
 
 audio:

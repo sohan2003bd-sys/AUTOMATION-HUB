@@ -16,7 +16,7 @@ class Rejected(RuntimeError):
 
 def fetch_media(cfg, cat, script, work, vid_id):
     """প্রতিটি দৃশ্যের জন্য আসল ফুটেজ/ছবি। কী না থাকলে বা না মিললে সেই দৃশ্যে None (ডিজাইন-ব্যাকগ্রাউন্ড চলবে)।"""
-    if not (cfg.get("media") or {}).get("enabled") or not media.available():
+    if not (cfg.get("media") or {}).get("enabled") or not media.available(cfg):
         return None
     used = media.Used(config.data_dir(cfg) / "media_used.json")
     fallback = cat.get("stock") or DEFAULT_STOCK.get(cat["id"], "technology")

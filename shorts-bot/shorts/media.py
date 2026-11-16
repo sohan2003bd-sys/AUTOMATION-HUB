@@ -1,6 +1,7 @@
-"""আসল ফুটেজ ও ছবি: Pexels ও Pixabay (দুটোরই বিনামূল্যের API, বাণিজ্যিক ব্যবহারে অনুমতি আছে, ক্রেডিট বাধ্যতামূলক নয়)।
+"""আসল ফুটেজ ও ছবি: Pexels, Pixabay ও Unsplash (বিনামূল্যের API) + শেষ ভরসা হিসেবে Lorem Picsum (কী লাগে না)।
 
-দরকারি কী (GitHub Secrets, দুটোর যেকোনো একটাই যথেষ্ট): PEXELS_API_KEY, PIXABAY_API_KEY
+দরকারি কী (GitHub Secrets, যেকোনো একটাই যথেষ্ট): PEXELS_API_KEY, PIXABAY_API_KEY, UNSPLASH_ACCESS_KEY
+Lorem Picsum কিওয়ার্ড বোঝে না (এলোমেলো সুন্দর ছবি দেয়), তাই config.yaml-এ `media.picsum_fallback: true` দিলে তবেই চলে — বাকি সবকিছু ব্যর্থ হলে।
 কী না থাকলে বা কিছু না মিললে ওই দৃশ্য আগের মতো ডিজাইন-ব্যাকগ্রাউন্ডে বানানো হয় (ভিডিও আটকায় না)।
 
 একই ক্লিপ বারবার না আসতে `data/media_used.json`-এ ব্যবহার হওয়া আইডি মনে রাখা হয়।
@@ -16,6 +17,8 @@ import requests
 
 PEXELS = "https://api.pexels.com"
 PIXABAY = "https://pixabay.com/api"
+UNSPLASH = "https://api.unsplash.com"
+PICSUM = "https://picsum.photos"
 MAX_BYTES = 80 * 1024 * 1024
 
 
@@ -162,30 +165,79 @@ def _pixabay_photos(q, rnd, min_dur):
             for h in (d or {}).get("hits", []) if h.get("largeImageURL")]
 
 
-def available() -> bool:
-    return bool(_key("PEXELS_API_KEY") or _key("PIXABAY_API_KEY"))
+def _unsplash_photos(q, rnd, min_dur):
+    k = _key("UNSPLASH_ACCESS_KEY")
+    if not k:
+        return []
+    d = _get(f"{UNSPLASH}/search/photos", headers={"Authorization": f"Client-ID {k}", "Accept-Version": "v1"},
+             params={"query": q, "orientation": "portrait", "content_filter": "high", "per_page": 20})
+    out = []
+    for p in (d or {}).get("results", []):
+        raw = (p.get("urls") or {}).get("raw")
+        if not raw:
+            continue
+        # raw লিংকে প্রস্থ/মান ঠিক করে নিই (imgix প্যারামিটার)
+        url = f"{raw}{'&' if '?' in raw else '?'}w=1440&q=80&fm=jpg&fit=max"
+        out.append({"id": f"unsplash-p{p['id']}", "url": url, "type": "image",
+                    "credit": f"Unsplash / {(p.get('user') or {}).get('name', '')}".strip(" /"),
+                    "track": (p.get("links") or {}).get("download_location")})
+    return out
+
+
+def _unsplash_track(c):
+    """Unsplash-এর নিয়ম: ছবি ব্যবহার করলে download_location-এ একটা অনুরোধ পাঠাতে হয় (ব্যর্থ হলেও ক্ষতি নেই)।"""
+    k = _key("UNSPLASH_ACCESS_KEY")
+    if k and c.get("track"):
+        try:
+            requests.get(c["track"], headers={"Authorization": f"Client-ID {k}"}, timeout=10)
+        except requests.RequestException:
+            pass
+
+
+def _picsum_photos(q, rnd, min_dur):
+    """কিওয়ার্ড ছাড়া এলোমেলো ছবি — তাই শুধু শেষ ভরসা। সিড থেকেই একই ছবি ফেরে, তাই 'ব্যবহৃত' তালিকা কাজ করে।"""
+    return [{"id": f"picsum-{seed}", "url": f"{PICSUM}/seed/{seed}/1080/1920.jpg", "type": "image",
+             "credit": "Lorem Picsum"}
+            for seed in (rnd.randrange(1, 1_000_000) for _ in range(6))]
+
+
+def available(cfg=None) -> bool:
+    if cfg and (cfg.get("media") or {}).get("picsum_fallback", False):
+        return True
+    return bool(_key("PEXELS_API_KEY") or _key("PIXABAY_API_KEY") or _key("UNSPLASH_ACCESS_KEY"))
 
 
 def fetch(cfg, query, fallback_query, workdir, tag, used):
     """একটা দৃশ্যের জন্য ফুটেজ/ছবি আনে। ফেরত: {"type", "path", "id", "credit"} বা None।"""
     mc = cfg.get("media") or {}
-    if not mc.get("enabled", False) or not available():
+    if not mc.get("enabled", False) or not available(cfg):
         return None
     min_dur = mc.get("min_clip_seconds", 3)
     order = [_pexels_videos, _pixabay_videos] if mc.get("prefer", "video") == "video" else []
-    order += [_pexels_photos, _pixabay_photos]
+    order += [_pexels_photos, _pixabay_photos, _unsplash_photos]
     if mc.get("prefer", "video") != "video":
         order += [_pexels_videos, _pixabay_videos]
     rnd = random.Random(f"{tag}-{query}")
     Path(workdir).mkdir(parents=True, exist_ok=True)
+
+    def _try(fn, q):
+        cands = [c for c in fn(q, rnd, min_dur) if not used.has(c["id"])]
+        rnd.shuffle(cands)
+        for c in cands[:3]:
+            ext = ".mp4" if c["type"] == "video" else ".jpg"
+            dest = Path(workdir) / f"m_{tag}{ext}"
+            if _download(c["url"], dest):
+                used.add(c["id"])
+                if c["id"].startswith("unsplash-"):
+                    _unsplash_track(c)
+                return {"type": c["type"], "path": dest, "id": c["id"], "credit": c["credit"], "query": q}
+        return None
+
     for q in query_ladder(query, fallback_query):
         for fn in order:
-            cands = [c for c in fn(q, rnd, min_dur) if not used.has(c["id"])]
-            rnd.shuffle(cands)
-            for c in cands[:3]:
-                ext = ".mp4" if c["type"] == "video" else ".jpg"
-                dest = Path(workdir) / f"m_{tag}{ext}"
-                if _download(c["url"], dest):
-                    used.add(c["id"])
-                    return {"type": c["type"], "path": dest, "id": c["id"], "credit": c["credit"], "query": q}
+            got = _try(fn, q)
+            if got:
+                return got
+    if mc.get("picsum_fallback", False):
+        return _try(_picsum_photos, "random")
     return None

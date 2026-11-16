@@ -156,43 +156,74 @@ class Media(unittest.TestCase):
             self.assertTrue(used.has("pexels-v2"))
 
 
-class Voice(unittest.TestCase):
-    def test_gemini_tts_request_and_conversion(self):
-        pcm = b"\x00\x10" * 24000  # ১ সেকেন্ড
-        ok = mock.Mock(status_code=200)
-        ok.json.return_value = {"candidates": [{"content": {"parts": [{"inlineData": {"data": base64.b64encode(pcm).decode()}}]}}]}
-        cfg = cfg_g()
-        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"GEMINI_API_KEY": "k"}), \
-             mock.patch.object(llm.requests, "post", return_value=ok) as post:
-            p = Path(d) / "a.mp3"
-            tts.synth(cfg, "পরীক্ষা", p, "gemini")
-            self.assertAlmostEqual(tts.duration(p), 1.0, delta=0.2)
-        body = post.call_args.kwargs["json"]
-        self.assertEqual(body["generationConfig"]["responseModalities"], ["AUDIO"])
-        self.assertIn("voiceName", json.dumps(body))
-        self.assertTrue(body["contents"][0]["parts"][0]["text"].endswith("পরীক্ষা"))
+class MoreImageSources(unittest.TestCase):
+    ENV = {"PEXELS_API_KEY": "", "PIXABAY_API_KEY": "", "UNSPLASH_ACCESS_KEY": ""}
 
-    def test_chain_and_fallback_to_second_engine(self):
+    def _dl(self, got):
+        def fake_dl(url, dest):
+            got.append(url)
+            Path(dest).write_bytes(b"x" * 20000)
+            return True
+        return fake_dl
+
+    def test_unsplash_used_when_only_its_key_exists(self):
+        cfg = config.load()
+        cfg["media"]["prefer"] = "photo"
+        resp = {"results": [{"id": "abc", "urls": {"raw": "https://images.unsplash.com/photo-1?ixid=x"},
+                             "user": {"name": "Z"}, "links": {"download_location": "https://api.unsplash.com/photos/abc/download"}}]}
+        got = []
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {**self.ENV, "UNSPLASH_ACCESS_KEY": "k"}), \
+             mock.patch.object(media, "_get", return_value=resp), mock.patch.object(media, "_download", self._dl(got)), \
+             mock.patch.object(media.requests, "get") as track:
+            m = media.fetch(cfg, "phone", "tech", d, "t", media.Used(Path(d) / "u.json"))
+        self.assertEqual(m["id"], "unsplash-pabc")
+        self.assertEqual(m["credit"], "Unsplash / Z")
+        self.assertIn("w=1440", got[0])
+        track.assert_called_once()
+
+    def test_picsum_off_by_default_and_last_resort_when_on(self):
+        cfg = config.load()
+        with mock.patch.dict(os.environ, self.ENV):
+            self.assertFalse(media.available(cfg))
+            self.assertIsNone(media.fetch(cfg, "x", "tech", tempfile.gettempdir(), "t", media.Used("/tmp/none2.json")))
+            cfg["media"]["picsum_fallback"] = True
+            self.assertTrue(media.available(cfg))
+            got = []
+            with tempfile.TemporaryDirectory() as d, mock.patch.object(media, "_download", self._dl(got)):
+                m = media.fetch(cfg, "x", "tech", d, "t", media.Used(Path(d) / "u.json"))
+        self.assertTrue(m["id"].startswith("picsum-"))
+        self.assertIn("picsum.photos/seed/", got[0])
+
+
+class Voice(unittest.TestCase):
+    def test_edge_is_only_engine(self):
         cfg = cfg_g()
-        cfg["tts"].update(engine="gemini", fallback="silent")
-        self.assertEqual(tts.engine_chain(cfg), ["gemini", "silent"])
-        self.assertEqual(tts.engine_chain(cfg, "edge"), ["edge"])
+        cfg["tts"]["engine"] = "edge"
+        self.assertEqual(tts.engine_chain(cfg), ["edge"])
+        self.assertEqual(tts.engine_chain(cfg, "silent"), ["silent"])
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                tts.synth(cfg, "পরীক্ষা", Path(d) / "a.mp3", "gemini")
+
+    def test_edge_engine_used_for_all_scenes(self):
+        cfg = cfg_g()
+        cfg["tts"]["engine"] = "edge"
         real = tts.synth
+        seen = []
 
         def fake(cfg_, text, path, engine=None):
-            if engine == "gemini":
-                raise llm.LLMError("কোটা", fatal=True, kind="quota")
-            return real(cfg_, text, path, engine)
+            seen.append(engine)
+            return real(cfg_, text, path, "silent")
 
         with tempfile.TemporaryDirectory() as d, mock.patch.object(tts, "synth", fake):
             paths, eng = tts.synth_all(cfg, samples.SCRIPT["scenes"][:2], Path(d))
-        self.assertEqual(eng, "silent")
-        self.assertEqual(len(paths), 2)
+        self.assertEqual(eng, "edge")
+        self.assertEqual(seen, ["edge", "edge"])
         self.assertTrue(all(p.suffix == ".wav" for p in paths))
 
-    def test_all_engines_failing_raises(self):
+    def test_edge_failing_raises(self):
         cfg = cfg_g()
-        cfg["tts"].update(engine="gemini", fallback="edge")
+        cfg["tts"]["engine"] = "edge"
         with tempfile.TemporaryDirectory() as d, mock.patch.object(tts, "synth", side_effect=RuntimeError("নেই")):
             with self.assertRaises(RuntimeError):
                 tts.synth_all(cfg, samples.SCRIPT["scenes"][:1], Path(d))
