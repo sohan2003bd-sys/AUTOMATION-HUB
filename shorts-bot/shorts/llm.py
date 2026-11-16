@@ -78,7 +78,7 @@ def _post(url, headers, body, retries=3, timeout=60, fast429=False):
             r = requests.post(url, headers=headers, json=body, timeout=timeout)
             if r.status_code == 200:
                 return r.json()
-            status, text = r.status_code, r.text[:300]
+            status, text = r.status_code, re.sub(r"\s+", " ", r.text)[:700]
             detail, d2 = _quota_detail(r.text) if status == 429 else ("", False)
             daily = status == 429 and (d2 or "perday" in r.text.lower().replace(" ", ""))
             if detail:  # লম্বা JSON-এর বদলে আসল কারণটুকু

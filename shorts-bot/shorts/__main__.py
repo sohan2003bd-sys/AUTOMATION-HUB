@@ -4,6 +4,7 @@
   python -m shorts make --count 3                # বাকি আইডিয়া থেকে ভিডিও বানাও
   python -m shorts status                        # অবস্থা দেখো
   python -m shorts auth-check                    # ইউটিউব টোকেন ঠিক আছে কিনা দেখো
+  python -m shorts gemini-check                  # Gemini কী ও কোটার আসল অবস্থা পরীক্ষা
   python -m shorts doctor                        # সবকিছু ঠিকমতো বসানো আছে কিনা দেখো (ffmpeg, ফন্ট, কী, ট্রানজিশন)
   python -m shorts edit ভিডিও.mp4|ফোল্ডার/ [--upload] [--privacy private] [--no-captions]
       # নিজের ভিডিও স্মার্ট এডিট: নীরবতা কাটা, ৯:১৬, ক্যাপশন, ভয়েস মাস্টারিং, টাইটেল
@@ -107,6 +108,7 @@ def main(argv=None):
     e.add_argument("--privacy", choices=["private", "public", "unlisted"])
     e.add_argument("--no-captions", action="store_true")
     sub.add_parser("doctor")
+    sub.add_parser("gemini-check")
     a = ap.parse_args(argv)
 
     cfg = config.load(a.config)
@@ -172,6 +174,9 @@ def main(argv=None):
             report.warning(f"{bad}টি ভিডিও হয়নি", info["problems"][0])
     elif a.cmd == "doctor":
         sys.exit(_doctor(cfg))
+    elif a.cmd == "gemini-check":
+        from . import gemini_check
+        sys.exit(gemini_check.run(cfg))
     elif a.cmd == "edit":
         files = smartedit.collect(a.paths)
         if not files:
