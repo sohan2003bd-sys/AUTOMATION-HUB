@@ -1,0 +1,63 @@
+{
+  "title": "ফোন স্লো? র‍্যাম খালি করার সহজ উপায়",
+  "description": "আপনার ফোন স্লো হয়ে গেলে র‍্যাম ম্যানেজমেন্টের মাধ্যমে দ্রুত ফাস্ট করার কার্যকর পদ্ধতি। কোনো অ্যাপ ছাড়াই ফোনের সেটিংসে কীভাবে ব্যাকগ্রাউন্ড অ্যাক্টিভিটি নিয়ন্ত্রণ করবেন তা দেখুন।",
+  "tags": [
+    "phone care",
+    "android tips",
+    "phone settings",
+    "speed up phone",
+    "ram management",
+    "ফোন টিপস",
+    "অ্যান্ড্রয়েড",
+    "স্মার্টফোন",
+    "টেক বাংলা",
+    "tech hacks"
+  ],
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "ফোন স্লো হয়ে যাওয়া মানেই র‍্যাম ভর্তি হওয়া। ব্যাকগ্রাউন্ড অ্যাক্টিভিটি বন্ধ করলেই ফোন অনেক ফাস্ট হবে।",
+      "screen_text": "র‍্যাম খালি করে ফোন ফাস্ট করুন",
+      "highlight": "ফাস্ট করুন",
+      "visual_query": "person looking at smartphone"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রথমে ফোনের সেটিংস থেকে অ্যাপস বা ম্যানেজ অ্যাপস-এ যান।",
+      "screen_text": "Settings to Apps",
+      "highlight": "Apps",
+      "visual_query": "smartphone settings menu"
+    },
+    {
+      "kind": "step",
+      "narration": "যে অ্যাপগুলো বেশি র‍্যাম ব্যবহার করে, সেগুলোতে ট্যাপ করুন।",
+      "screen_text": "Select heavy apps",
+      "highlight": "heavy apps",
+      "visual_query": "scrolling through app list"
+    },
+    {
+      "kind": "step",
+      "narration": "এবার ব্যাটারি অপশনে যান এবং রেস্ট্রিক্টেড মোডটি সিলেক্ট করুন।",
+      "screen_text": "Battery to Restricted",
+      "highlight": "Restricted",
+      "visual_query": "tapping phone screen"
+    },
+    {
+      "kind": "tip",
+      "narration": "এতে অ্যাপগুলো ব্যাকগ্রাউন্ডে আর র‍্যাম দখল করতে পারবে না।",
+      "screen_text": "Stop background RAM usage",
+      "highlight": "RAM usage",
+      "visual_query": "digital abstract visualization"
+    },
+    {
+      "kind": "outro",
+      "narration": "এভাবেই আপনার ফোন আগের চেয়ে অনেক বেশি স্মুথ চলবে।",
+      "screen_text": "ফোন এখন সুপার ফাস্ট",
+      "highlight": "সুপার ফাস্ট",
+      "visual_query": "happy person using phone"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}

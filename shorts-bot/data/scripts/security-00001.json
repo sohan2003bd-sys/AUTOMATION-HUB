@@ -1,0 +1,63 @@
+{
+  "title": "জিমেইলে টু-স্টেপ ভেরিফিকেশন অন করার নিয়ম",
+  "description": "আপনার জিমেইল অ্যাকাউন্ট সুরক্ষিত রাখতে টু-স্টেপ ভেরিফিকেশন অন করার সহজ উপায়। হ্যাকিং থেকে বাঁচতে এখনই এই সেটিংসটি করে নিন।",
+  "tags": [
+    "Gmail Security",
+    "জিমেইল সিকিউরিটি",
+    "Two Step Verification",
+    "টু স্টেপ ভেরিফিকেশন",
+    "Account Hacking",
+    "অ্যাকাউন্ট হ্যাকিং",
+    "Online Safety",
+    "অনলাইন নিরাপত্তা",
+    "Tech Tips",
+    "টেক টিপস"
+  ],
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "আপনার জিমেইল অ্যাকাউন্ট কি সুরক্ষিত আছে? হ্যাকিংয়ের চিন্তা দূর করুন।",
+      "screen_text": "Gmail account secure?",
+      "highlight": "secure?",
+      "visual_query": "person looking at phone"
+    },
+    {
+      "kind": "step",
+      "narration": "খুব সহজেই টু-স্টেপ ভেরিফিকেশন অন করে অ্যাকাউন্ট নিরাপদ রাখতে পারেন।",
+      "screen_text": "Turn on 2-Step Verification",
+      "highlight": "2-Step Verification",
+      "visual_query": "smartphone security settings"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রথমে আপনার ফোনের গুগল অ্যাকাউন্ট সেটিংসে প্রবেশ করুন।",
+      "screen_text": "Open Google Account settings",
+      "highlight": "Google Account",
+      "visual_query": "clicking phone screen"
+    },
+    {
+      "kind": "step",
+      "narration": "এবার সিকিউরিটি অপশন থেকে টু-স্টেপ ভেরিফিকেশন সিলেক্ট করুন।",
+      "screen_text": "Go to Security option",
+      "highlight": "Security option",
+      "visual_query": "scrolling on smartphone"
+    },
+    {
+      "kind": "tip",
+      "narration": "পাসওয়ার্ড দিয়ে প্রম্পট বা কোড অপশনটি চালু করে নিন।",
+      "screen_text": "Enable prompts or codes",
+      "highlight": "Enable prompts",
+      "visual_query": "typing verification code"
+    },
+    {
+      "kind": "outro",
+      "narration": "এই ছোট সতর্কতা আপনার জিমেইল অ্যাকাউন্ট হ্যাকিং থেকে বাঁচাবে।",
+      "screen_text": "Keep Gmail safe",
+      "highlight": "Keep Gmail",
+      "visual_query": "smiling person with phone"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
