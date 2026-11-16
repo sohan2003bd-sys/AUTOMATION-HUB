@@ -1,0 +1,58 @@
+{
+  "title": "মোবাইল কোর্টের জরিমানা চ্যালেঞ্জ করার সঠিক নিয়ম",
+  "description": "অনলাইন বা মোবাইল কোর্টে জরিমানা করা হলে ঘাবড়ে না গিয়ে কীভাবে আইনগতভাবে তা চ্যালেঞ্জ করতে হয়, জেনে নিন সঠিক প্রক্রিয়া। সচেতন থাকুন, আইনি অধিকার জানুন।",
+  "tags": [
+    "mobile court",
+    "mobile court fine",
+    "mobile court bangladesh",
+    "mobile court law",
+    "আইন ও অধিকার",
+    "মোবাইল কোর্ট",
+    "জরিমানা",
+    "legal rights bangladesh",
+    "আইনি সহায়তা",
+    "law awareness",
+    "bangla shorts"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "মোবাইল কোর্টের যেকোনো জরিমানার আদেশ কি চাইলেই চ্যালেঞ্জ করা যায়?",
+      "screen_text": "মোবাইল কোর্টের যেকোনো জরিমানার আদেশ কি চাইলেই",
+      "highlight": "",
+      "visual_query": "man looking at phone serious"
+    },
+    {
+      "kind": "step",
+      "narration": "আইন অনুযায়ী, নির্বাহী ম্যাজিস্ট্রেটের দেওয়া আদেশের বিরুদ্ধে নির্দিষ্ট সময়ের মধ্যে সংশ্লিষ্ট দায়রা জজ আদালতে আপিল করতে হয়।",
+      "screen_text": "আইন অনুযায়ী, নির্বাহী ম্যাজিস্ট্রেটের দেওয়া আদেশের বিরুদ্ধে",
+      "highlight": "",
+      "visual_query": "lawyer sitting at desk"
+    },
+    {
+      "kind": "step",
+      "narration": "তাই জরিমানার রসিদ এবং আদেশের কপি খুব সাবধানে সংরক্ষণ করা জরুরি।",
+      "screen_text": "তাই জরিমানার রসিদ এবং আদেশের কপি খুব",
+      "highlight": "",
+      "visual_query": "hands holding paper document"
+    },
+    {
+      "kind": "tip",
+      "narration": "এক্ষেত্রে কোনো আইনজীবীর পরামর্শ নিয়ে নির্দিষ্ট ধারায় দরখাস্ত দাখিল করতে হবে।",
+      "screen_text": "এক্ষেত্রে কোনো আইনজীবীর পরামর্শ নিয়ে নির্দিষ্ট ধারায়",
+      "highlight": "",
+      "visual_query": "person talking to lawyer"
+    },
+    {
+      "kind": "outro",
+      "narration": "আইনি প্রক্রი জানা থাকলে নিজের অধিকার রক্ষা করা সহজ হয়।",
+      "screen_text": "আইনি প্রক্রი জানা থাকলে নিজের অধিকার রক্ষা",
+      "highlight": "",
+      "visual_query": "courtyard of high court building"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
