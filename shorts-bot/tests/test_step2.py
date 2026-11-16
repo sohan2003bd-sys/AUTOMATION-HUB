@@ -70,7 +70,7 @@ class Step2(unittest.TestCase):
         cfg["paths"] = {"data_dir": os.path.join(d, "data"), "out_dir": os.path.join(d, "out")}
         cfg["_root"] = d
         store = Store(os.path.join(d, "data", "queue.jsonl"))
-        store.add_topics("ai_tools", ["ফোনের ব্যাটারি বাঁচানোর সহজ উপায়", "হোয়াটসঅ্যাপে ভুল মেসেজ মুছে ফেলার নিয়ম",
+        store.add_topics("tech", ["ফোনের ব্যাটারি বাঁচানোর সহজ উপায়", "হোয়াটসঅ্যাপে ভুল মেসেজ মুছে ফেলার নিয়ম",
                                       "পাসওয়ার্ড নিরাপদ রাখার তিনটি কৌশল", "এক্সেলে দ্রুত যোগফল বের করার শর্টকাট"][:n])
         return cfg, store
 

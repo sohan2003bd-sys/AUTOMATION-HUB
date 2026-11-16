@@ -13,32 +13,65 @@ class RunError(RuntimeError):
 
 
 def refill(cfg, store, count, budget_sec=300):
-    """বাকি আইডিয়া কমে গেলে নতুন আইডিয়া বানায়।
-    যথেষ্ট জমলে থামে (পরীক্ষার রানে ১-৩টি কলই লাগে), AI ধীর হলে budget_sec-এর পর ছেড়ে দেয়।
-    ফেরত: ত্রুটির তালিকা (কিছু ব্যর্থ হলে)।"""
+    """আইডিয়া ভরে।
+    (১) টাটকা-থাকা-দরকার ক্যাটাগরিতে (evergreen: false) গত ২০ ঘণ্টার অন্তত count×২টি আইডিয়া না থাকলে আজকের আলোচিত
+        বিষয় থেকে নতুন আইডিয়া (যে ক্যাটাগরিতে টাটকা আইডিয়া কম ও কম ভিডিও হয়েছে সেটা আগে);
+    (২) তারপরও মোট বাকি আইডিয়া কমে গেলে বাকি ক্যাটাগরি থেকে ভরা।
+    যথেষ্ট জমলে থামে; AI ধীর হলে budget_sec-এর পর ছেড়ে দেয়। ফেরত: ত্রুটির তালিকা (কিছু ব্যর্থ হলে)।"""
     errors = []
-    left = sum(1 for r in store.rows if r["status"] in ("idea", "scripted"))
-    if left >= count * 2:
-        return errors
-    target = count * 5
-    cats = sorted(cfg["categories"], key=lambda c: len(store.topics(c["id"])))  # কম আইডিয়াওয়ালা আগে
-    per = max(2, math.ceil(target / len(cats)))
+    ic = cfg.get("ideas") or {}
+    now = time.time()
+    live = ("idea", "scripted")
+    left = sum(1 for r in store.rows if r["status"] in live)
     t0 = time.time()
-    for c in cats:
-        if left >= target:
-            break
+    done_ids = set()
+    state = {"left": left, "stop": False}
+
+    def run_job(c, n):
         if time.time() - t0 > budget_sec:
             errors.append(f"আইডিয়া বানাতে {budget_sec} সেকেন্ডের বেশি লাগছে, বাকিগুলো ছেড়ে দিলাম")
-            break
+            state["stop"] = True
+            return 0
         try:
-            n = ideas.generate_for_category(cfg, store, c, per)
-            left += n
-            print(f"আইডিয়া: {c['name']} +{n}")
+            added = ideas.generate_for_category(cfg, store, c, n)
         except Exception as e:
             print(f"আইডিয়া ব্যর্থ: {c['name']} — {e}", file=sys.stderr)
             errors.append(str(e))
             if isinstance(e, llm.LLMError) and e.fatal:
-                break  # কী/কোটা/মডেলের সমস্যা — বাকি ক্যাটাগরিতেও একই হবে, সময় নষ্ট নয়
+                state["stop"] = True  # কী/কোটা/মডেলের সমস্যা — বাকি ক্যাটাগরিতেও একই হবে, সময় নষ্ট নয়
+            return 0
+        state["left"] += added
+        done_ids.add(c["id"])
+        print(f"আইডিয়া: {c['name']} +{added}")
+        return added
+
+    if ic.get("trending"):
+        news = [c for c in cfg["categories"] if not c.get("evergreen", True)]
+
+        def fresh_n(c):
+            return sum(1 for r in store.rows if r["category"] == c["id"] and r["status"] in live
+                       and now - r.get("created", 0) < 20 * 3600)
+
+        need = count * 2
+        have = sum(fresh_n(c) for c in news)
+        done_n = {}
+        for r in store.rows:
+            if r["status"] in ("rendered", "uploaded"):
+                done_n[r["category"]] = done_n.get(r["category"], 0) + 1
+        for c in sorted(news, key=lambda c: (fresh_n(c), done_n.get(c["id"], 0))):
+            if have >= need or state["stop"]:
+                break
+            have += run_job(c, 3)
+    if state["stop"] or state["left"] >= count * 2:
+        return errors
+    target = count * 5
+    cats = sorted((c for c in cfg["categories"] if c["id"] not in done_ids),
+                  key=lambda c: len(store.topics(c["id"])))  # কম আইডিয়াওয়ালা আগে
+    per = max(2, math.ceil(target / max(1, len(cfg["categories"]))))
+    for c in cats:
+        if state["left"] >= target or state["stop"]:
+            break
+        run_job(c, per)
     return errors
 
 
@@ -97,6 +130,12 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
             r["status"] = "scripted"
     store.save()
 
+    ic = cfg.get("ideas") or {}
+    gone = store.retire({c["id"] for c in cfg["categories"]},
+                        {c["id"] for c in cfg["categories"] if c.get("evergreen", True)},
+                        int(ic.get("max_age_days", 0) or 0))
+    if gone:
+        print(f"পুরনো/বাদ-পড়া ক্যাটাগরির {gone}টি আইডিয়া সরানো হয়েছে")
     refill_errors = refill(cfg, store, count)
     todo = store.pending("scripted", count)
     if len(todo) < count:

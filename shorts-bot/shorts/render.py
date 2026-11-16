@@ -181,8 +181,43 @@ def _background(W, H, accent):
 # ======================================================================
 TRANSITIONS = ["fade", "slideleft", "slideup", "wipeleft", "smoothleft", "smoothup", "circleopen", "zoomin",
                "radial", "dissolve"]
+# প্রতি ভিডিওর আলাদা "লুক" — ফুটেজের রঙের ছোঁয়া, ভিগনেট ও হালকা ফিল্ম-গ্রেইন। স্টক ফুটেজ এতে ক্যামেরার আসল ছবির মতো
+# একরকম টোনে বসে যায় এবং প্রতিটি ভিডিও আলাদা দেখায়। (ffmpeg ফিল্টার: eq, colorbalance, vignette, noise)
+LOOKS = {
+    "natural":   {"eq": "contrast=1.05:saturation=1.06", "grain": 3},
+    "warm":      {"eq": "contrast=1.06:saturation=1.10:gamma=1.02", "cb": "rm=0.05:gm=0.01:bm=-0.05:rh=0.04:bh=-0.03", "grain": 4},
+    "cool":      {"eq": "contrast=1.07:saturation=1.02", "cb": "rm=-0.03:bm=0.05:rh=-0.02:bh=0.04", "grain": 4},
+    "cinematic": {"eq": "contrast=1.12:saturation=0.96", "cb": "rs=-0.03:bs=0.05:rh=0.05:bh=-0.04", "vig": 0.5, "grain": 5},
+    "crisp":     {"eq": "contrast=1.10:saturation=1.04", "sharp": True, "grain": 2},
+    "soft":      {"eq": "contrast=0.98:saturation=1.08:gamma=1.04", "cb": "rm=0.02:bm=-0.015", "vig": 0.35, "grain": 3},
+}
 VOICE_DELAY = 0.16          # দৃশ্য শুরুর কতক্ষণ পরে কথা শুরু
 CLEAN = "-.,!?:;\"'()।‘’“”"
+
+
+def pick_look(cfg, seed):
+    """ভিডিওর seed থেকে একটা লুক বাছে (একই seed = একই লুক)। video.looks: false হলে None (আগের মতো সাধারণ রঙ)।"""
+    if not cfg["video"].get("looks", True):
+        return None
+    rnd = random.Random(f"look-{seed}")
+    name = rnd.choice(sorted(LOOKS))
+    return {"name": name, **LOOKS[name], "off": rnd.randrange(4)}
+
+
+def look_filter(look):
+    """লুক → ffmpeg ফিল্টার-চেইনের অংশ।"""
+    if not look:
+        return "eq=contrast=1.06:saturation=1.1"
+    parts = [f"eq={look['eq']}"]
+    if look.get("cb"):
+        parts.append(f"colorbalance={look['cb']}")
+    if look.get("sharp"):
+        parts.append("unsharp=5:5:0.6:5:5:0.0")
+    if look.get("vig"):
+        parts.append(f"vignette=angle={look['vig']}")
+    if look.get("grain"):
+        parts.append(f"noise=alls={look['grain']}:allf=t")
+    return ",".join(parts)
 
 
 def _unit(cfg):
@@ -259,6 +294,34 @@ def static_layer(cfg, cat, idx, total, handle, media_on):
     return img.resize((W, H), Image.LANCZOS)
 
 
+def subtitle_shade(cfg, media_on, handle):
+    """শুধু-সাবটাইটেল স্টাইলের স্থির স্তর: নিচের দিকে হালকা ছায়া (সাবটাইটেল পড়ার সুবিধার জন্য) + (থাকলে) হ্যান্ডেল।
+    কোনো ক্যাটাগরি-চিপ, অগ্রগতির বার বা হেডলাইন নেই।"""
+    W, H = cfg["video"]["width"], cfg["video"]["height"]
+    U = _unit(cfg)
+    px = lambda v: int(round(v * U))
+    h = H
+    col = Image.new("L", (1, h))
+    data = []
+    for y in range(h):
+        f = y / h
+        a = 0.0 if media_on else 25.0
+        if f > 0.40:
+            a += (150 if media_on else 90) * ((f - 0.40) / 0.60) ** 1.4
+        if f < 0.18:
+            a += (70 if media_on else 0) * (1 - f / 0.18) ** 1.6
+        data.append(int(min(255, a)))
+    col.putdata(data)
+    img = Image.new("RGBA", (W, h), (6, 8, 20, 255))
+    img.putalpha(col.resize((W, h), Image.NEAREST))
+    if handle:
+        d = ImageDraw.Draw(img)
+        fh = load_font(cfg, px(42))
+        draw_text(d, ((W - fh.getlength(handle)) / 2, h - px(150)), handle, fh, fill=(235, 238, 248, 235),
+                  stroke_width=px(2), stroke_fill=(0, 0, 0, 255))
+    return img
+
+
 def headline_layer(cfg, cat, scene, step_no):
     """মূল লেখা (+ ধাপ নম্বরের গোল ব্যাজ)। ফেরত: (ছবি, x, y) — শুধু লেখার মাপের ছোট ছবি।"""
     W, H = cfg["video"]["width"], cfg["video"]["height"]
@@ -319,17 +382,42 @@ def caption_chunks(text, t0, t1, max_words=4):
     return out
 
 
-def caption_layer(cfg, text):
-    """ক্যাপশনের কালো স্বচ্ছ পিল। ফেরত: (ছবি, x, y)।"""
+def caption_layer(cfg, text, outline=None):
+    """বাংলা সাবটাইটেলের ছবি। ফেরত: (ছবি, x, y)।
+    outline (ডিফল্ট: video.style == subtitles) = মোটা সাদা অক্ষর + কালো বর্ডার + নরম ছায়া (আজকের Shorts-এর ধাঁচ);
+    নইলে আগের কালো স্বচ্ছ পিল।"""
     W, H = cfg["video"]["width"], cfg["video"]["height"]
     U = _unit(cfg)
+    if outline is None:
+        outline = cfg["video"].get("style", "classic") == "subtitles"
     px = lambda v: int(round(v * U * SS))
-    max_w = W * SS - px(240)
-    for size in range(68, 40, -4):
+    max_w = W * SS - px(200 if outline else 240)
+    sizes = range(84, 44, -4) if outline else range(68, 40, -4)
+    for size in sizes:
         font = load_font(cfg, px(size))
         lines = wrap(font, text, max_w)
         if len(lines) <= 2:
             break
+    if outline:
+        line_h = int(px(size) * 1.36)
+        sw = px(7)
+        tw = max(font.getlength(l) for l in lines)
+        pad = sw + px(18)
+        bw, bh = int(tw + 2 * pad), int(len(lines) * line_h + 2 * pad)
+        sh = Image.new("RGBA", (bw, bh), (0, 0, 0, 0))
+        d = ImageDraw.Draw(sh)
+        for i, ln in enumerate(lines):
+            x = (bw - font.getlength(ln)) / 2
+            draw_text(d, (x + px(3), pad + i * line_h + px(5)), ln, font, fill=(0, 0, 0, 200),
+                      stroke_width=sw, stroke_fill=(0, 0, 0, 200))
+        sh = sh.filter(ImageFilter.GaussianBlur(px(5)))
+        d = ImageDraw.Draw(sh)
+        for i, ln in enumerate(lines):
+            x = (bw - font.getlength(ln)) / 2
+            draw_text(d, (x, pad + i * line_h), ln, font, fill=(255, 255, 255, 255),
+                      stroke_width=sw, stroke_fill=(0, 0, 0, 255))
+        out = sh.resize((max(2, bw // SS), max(2, bh // SS)), Image.LANCZOS)
+        return out, int((W - out.width) / 2), int(H * 0.66 - out.height / 2)
     line_h = int(px(size) * 1.38)
     tw = max(font.getlength(l) for l in lines)
     padx, pady = px(34), px(20)
@@ -344,9 +432,9 @@ def caption_layer(cfg, text):
     return out, int((W - out.width) / 2), int(H * 0.675 - out.height / 2)
 
 
-def _zoom_expr(i, n):
-    """দৃশ্যভেদে আলাদা Ken Burns চাল (ভিতরে/বাইরে জুম, বাঁ-ডান প্যান)।"""
-    v = i % 4
+def _zoom_expr(i, n, off=0):
+    """দৃশ্যভেদে আলাদা Ken Burns চাল (ভিতরে/বাইরে জুম, বাঁ-ডান প্যান); off = ভিডিওভেদে শুরুর চাল আলাদা করার জন্য।"""
+    v = (i + off) % 4
     if v == 0:
         return f"1+0.08*on/{n}", "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
     if v == 1:
@@ -377,7 +465,7 @@ def _run(cmd):
         raise RuntimeError(f"ffmpeg ব্যর্থ: {r.stderr[-700:]}")
 
 
-def render_scene(cfg, cat, script, i, step_no, voice_dur, clip_len, media, workdir, handle):
+def render_scene(cfg, cat, script, i, step_no, voice_dur, clip_len, media, workdir, handle, look=None):
     """একটা দৃশ্য → শব্দহীন ভিডিও (ক্লিপ/ছবি + ছায়া + অ্যানিমেটেড লেখা + ক্যাপশন)।"""
     workdir = Path(workdir)
     W, H, fps = cfg["video"]["width"], cfg["video"]["height"], cfg["video"]["fps"]
@@ -385,13 +473,15 @@ def render_scene(cfg, cat, script, i, step_no, voice_dur, clip_len, media, workd
     total = len(script["scenes"])
     n = max(2, int(round(clip_len * fps)))
     media_on = bool(media)
+    subs_only = cfg["video"].get("style", "classic") == "subtitles"
+    lf = look_filter(look)
 
     inputs, filt = [], []
     # --- পটভূমি ---
     if media and media["type"] == "video":
         inputs += ["-stream_loop", "-1", "-t", f"{clip_len:.3f}", "-i", str(media["path"])]
         filt.append(f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={fps},setsar=1,"
-                    f"eq=contrast=1.06:saturation=1.1,format=yuv420p[bg]")
+                    f"{lf},format=yuv420p[bg]")
     else:
         if media:   # ছবি
             src = media["path"]
@@ -402,27 +492,31 @@ def render_scene(cfg, cat, script, i, step_no, voice_dur, clip_len, media, workd
         else:       # ডিজাইন-ব্যাকগ্রাউন্ড
             bgp = workdir / f"bg{i:02d}.png"
             _background(W * 2, H * 2, cat["accent"]).save(bgp)
-        z, x, y = _zoom_expr(i, n)
+        z, x, y = _zoom_expr(i, n, (look or {}).get("off", 0))
         inputs += ["-i", str(bgp)]
-        filt.append(f"[0:v]zoompan=z='{z}':x='{x}':y='{y}':d={n}:s={W}x{H}:fps={fps},setsar=1,format=yuv420p[bg]")
+        filt.append(f"[0:v]zoompan=z='{z}':x='{x}':y='{y}':d={n}:s={W}x{H}:fps={fps},setsar=1,{lf},format=yuv420p[bg]")
 
     # --- স্থির স্তর ---
     st = workdir / f"st{i:02d}.png"
-    static_layer(cfg, cat, i, total, handle, media_on).save(st)
+    if subs_only:
+        subtitle_shade(cfg, media_on, handle).save(st)
+    else:
+        static_layer(cfg, cat, i, total, handle, media_on).save(st)
     inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{clip_len:.3f}", "-i", str(st)]
     filt.append("[bg][1:v]overlay=0:0:format=auto[s0]")
     k, cur = 2, "s0"
 
-    # --- অ্যানিমেটেড হেডলাইন (নিচ থেকে উঠে আসে + ফেড-ইন) ---
-    himg, hx, hy = headline_layer(cfg, cat, sc, step_no)
-    hp = workdir / f"hd{i:02d}.png"
-    himg.save(hp)
-    inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{clip_len:.3f}", "-i", str(hp)]
-    slide = int(round(70 * _unit(cfg)))
-    t0 = 0.18
-    filt.append(f"[{k}:v]format=rgba,fade=t=in:st={t0}:d=0.4:alpha=1[hd]")
-    filt.append(f"[{cur}][hd]overlay=x={hx}:y='{hy}+(1-pow(1-min(max(t-{t0},0)/0.55,1),3))*{slide}':format=auto[s1]")
-    k, cur = k + 1, "s1"
+    # --- অ্যানিমেটেড হেডলাইন (নিচ থেকে উঠে আসে + ফেড-ইন) — শুধু classic স্টাইলে; subtitles স্টাইলে পর্দায় শুধু সাবটাইটেল ---
+    if not subs_only:
+        himg, hx, hy = headline_layer(cfg, cat, sc, step_no)
+        hp = workdir / f"hd{i:02d}.png"
+        himg.save(hp)
+        inputs += ["-loop", "1", "-framerate", str(fps), "-t", f"{clip_len:.3f}", "-i", str(hp)]
+        slide = int(round(70 * _unit(cfg)))
+        t0 = 0.18
+        filt.append(f"[{k}:v]format=rgba,fade=t=in:st={t0}:d=0.4:alpha=1[hd]")
+        filt.append(f"[{cur}][hd]overlay=x={hx}:y='{hy}+(1-pow(1-min(max(t-{t0},0)/0.55,1),3))*{slide}':format=auto[s1]")
+        k, cur = k + 1, "s1"
 
     # --- ক্যাপশন (ফ্রেজ ধরে ধরে) ---
     if cfg["video"].get("captions", True):
@@ -488,6 +582,7 @@ def render_video(cfg, cat, script, voices, medias, out_path, workdir, seed="", m
     handle = (cfg.get("channel") or {}).get("handle", "")
     pl = plan(cfg, voices)
     T = pl["T"]
+    look = pick_look(cfg, seed)
     files, step_no = [], 0
     nsc = len(script["scenes"])
     for i, sc in enumerate(script["scenes"]):
@@ -495,7 +590,7 @@ def render_video(cfg, cat, script, voices, medias, out_path, workdir, seed="", m
             step_no += 1
         clip_len = pl["durs"][i] + (T if i < nsc - 1 else 0)
         files.append(render_scene(cfg, cat, script, i, step_no if sc["kind"] == "step" else 0,
-                                  pl["voice_dur"][i], clip_len, medias[i] if medias else None, workdir, handle))
+                                  pl["voice_dur"][i], clip_len, medias[i] if medias else None, workdir, handle, look))
     video = workdir / "joined.mp4"
     trans = join_scenes(cfg, files, pl, video, seed)
     starts_v = [s + VOICE_DELAY for s in pl["starts"]]
@@ -503,7 +598,7 @@ def render_video(cfg, cat, script, voices, medias, out_path, workdir, seed="", m
     mixed = audio.build_mix(cfg, voices, starts_v, pl["total"], music, sfx, workdir, workdir / "mix.wav")
     master = audio.loudnorm(mixed, workdir / "master.wav")
     mux(video, master, out_path)
-    return {"total": pl["total"], "transitions": trans}
+    return {"total": pl["total"], "transitions": trans, "look": (look or {}).get("name")}
 
 
 def cleanup(workdir):

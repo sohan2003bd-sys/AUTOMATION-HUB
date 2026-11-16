@@ -4,9 +4,10 @@ import json
 from . import audio, config, media, render, research, scriptgen, tts
 
 DEFAULT_STOCK = {
-    "ai_tools": "artificial intelligence technology", "android": "smartphone screen", "phone_care": "smartphone hand",
-    "security": "cyber security lock", "social": "social media phone", "google": "laptop internet",
-    "office": "office laptop work", "pc": "computer desk", "internet": "wifi router", "learn": "technology",
+    "trending": "news city people", "health": "doctor hospital", "money": "money bank market",
+    "scam": "phone call worried", "law": "court law office", "science": "science space nature",
+    "tech": "technology smartphone", "career": "students office interview", "world": "world city skyline",
+    "life": "family home lifestyle",
 }
 
 
@@ -32,12 +33,13 @@ def fetch_media(cfg, cat, script, work, vid_id):
     return items
 
 
-def finish(cfg, cat, script, vid_id, engine=None):
+def finish(cfg, cat, script, vid_id, engine=None, voice_index=None):
     out = config.out_dir(cfg)
     work = config.data_dir(cfg) / "tmp" / vid_id
     work.mkdir(parents=True, exist_ok=True)
-    voices, eng = tts.synth_all(cfg, script["scenes"], work, engine)
-    print(f"  ভয়েস: {eng}")
+    voice = tts.pick_voice(cfg, vid_id, script.get("tone", "warm"), voice_index)
+    voices, eng = tts.synth_all(cfg, script["scenes"], work, engine, voice)
+    print(f"  ভয়েস: {eng} / {voice['name']} ({voice['gender']}, গতি {voice['rate']}, পিচ {voice['pitch']})")
     medias = fetch_media(cfg, cat, script, work, vid_id)
     music = audio.find_music(cfg, vid_id)
     video = out / f"{vid_id}.mp4"
@@ -49,7 +51,8 @@ def finish(cfg, cat, script, vid_id, engine=None):
     desc += "\n\n#Shorts"
     credits = sorted({m["credit"] for m in (medias or []) if m and m.get("credit")})
     meta = {"id": vid_id, "category": cat["id"], "title": script["title"], "description": desc,
-            "tags": script["tags"], "video": video.name, "voice": eng, "credits": credits,
+            "tags": script["tags"], "video": video.name, "voice": eng, "voice_name": voice["name"],
+            "voice_gender": voice["gender"], "look": info.get("look"), "credits": credits,
             "seconds": round(info["total"], 1)}
     (out / f"{vid_id}.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     render.cleanup(work)
@@ -87,6 +90,8 @@ def make_one(cfg, store, rec, engine=None):
         script = make_script(cfg, store, cat, rec, spath)
     else:
         script = json.loads(spath.read_text(encoding="utf-8"))
-    video = finish(cfg, cat, script, rec["id"], engine)
+    # এ পর্যন্ত যতগুলো ভিডিও বানানো হয়েছে — তার জোড়-বিজোড় দিয়ে নারী/পুরুষ কণ্ঠ পালা করে
+    made = sum(1 for r in store.rows if r["status"] in ("rendered", "uploaded"))
+    video = finish(cfg, cat, script, rec["id"], engine, made)
     store.update(rec["id"], status="rendered", video=video.name)
     return video

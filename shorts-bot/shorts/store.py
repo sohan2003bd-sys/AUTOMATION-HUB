@@ -56,6 +56,24 @@ class Store:
         self.save()
         return added
 
+    def retire(self, valid_ids, evergreen_ids, max_age_days, now=None):
+        """আর-নেই এমন ক্যাটাগরির আইডিয়া 'retired', আর টাটকা-থাকা-দরকার (non-evergreen) পুরনো আইডিয়া 'expired' করে দেয়।
+        শুধু idea/scripted অবস্থার সারি ছোঁয়া হয়; আপলোড-হওয়া সারি ও ডুপ্লিকেট-মেলানোর ইতিহাস অক্ষত থাকে।"""
+        now = now or time.time()
+        n = 0
+        for r in self.rows:
+            if r["status"] not in ("idea", "scripted"):
+                continue
+            if r["category"] not in valid_ids:
+                r["status"] = "retired"
+                n += 1
+            elif max_age_days and r["category"] not in evergreen_ids and now - r.get("created", now) > max_age_days * 86400:
+                r["status"] = "expired"
+                n += 1
+        if n:
+            self.save()
+        return n
+
     def get(self, rid):
         for r in self.rows:
             if r["id"] == rid:

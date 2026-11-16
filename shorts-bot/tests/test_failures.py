@@ -16,7 +16,7 @@ def _setup(d, ideas=()):
     cfg["_root"] = d
     store = Store(os.path.join(d, "data", "queue.jsonl"))
     if ideas:
-        store.add_topics("ai_tools", list(ideas))
+        store.add_topics("tech", list(ideas))
     return cfg, store
 
 
