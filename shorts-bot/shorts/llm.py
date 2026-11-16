@@ -11,9 +11,10 @@ import requests
 class LLMError(RuntimeError):
     """fatal=True মানে আবার চেষ্টা করে লাভ নেই (কী ভুল/নেই, মডেলের নাম ভুল, কোটা শেষ)।"""
 
-    def __init__(self, msg, fatal=False, kind="other"):
+    def __init__(self, msg, fatal=False, kind="other", daily=False):
         super().__init__(msg)
         self.fatal = fatal
+        self.daily = daily  # true = দৈনিক কোটা শেষ; আজ আর চেষ্টা করে লাভ নেই
         # kind: key (কী নেই/ভুল) | model (নাম ভুল) | quota | server | network | other
         # key ছাড়া বাকি ক্ষেত্রে বিকল্প মডেলে চেষ্টা করা যায়
         self.kind = kind
@@ -49,13 +50,17 @@ def _explain(status, text):
 
 
 def _post(url, headers, body, retries=3, timeout=60, fast429=False):
-    last, status, text = None, None, ""
+    last, status, text, daily = None, None, "", False
     for i in range(retries):
         try:
             r = requests.post(url, headers=headers, json=body, timeout=timeout)
             if r.status_code == 200:
                 return r.json()
             status, text = r.status_code, r.text[:300]
+            daily = status == 429 and "perday" in r.text.lower().replace(" ", "")
+            if daily:  # দৈনিক কোটা: অপেক্ষা বা রিট্রাই করে লাভ নেই
+                last = f"HTTP {status}: {text}"
+                break
             last = f"HTTP {status}: {text}"
             if status not in (408, 409, 429, 500, 502, 503, 529):
                 break
@@ -66,7 +71,7 @@ def _post(url, headers, body, retries=3, timeout=60, fast429=False):
         if i < retries - 1:
             time.sleep(2 ** (i + 1))
     why, fatal, kind = _explain(status, text)
-    raise LLMError(_redact(f"{why} [{last or 'অজানা ত্রুটি'}]"), fatal=fatal, kind=kind)
+    raise LLMError(_redact(f"{why} [{last or 'অজানা ত্রুটি'}]"), fatal=fatal, kind=kind, daily=daily)
 
 
 def _gemini_full(llm_cfg, model, key, system, user, max_tokens, temperature, retries,
@@ -109,6 +114,7 @@ def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries)
 
 # ---- একাধিক Gemini কী: একটার কোটা শেষ হলে পরেরটা, শেষেরটার পর আবার প্রথমটা (গোল ঘুরে) ----
 KEY_NAMES = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 11)]
+DAILY_COOLDOWN = 6 * 3600  # দৈনিক কোটা শেষ হলে এই রানে ওই (মডেল, কী) আর ছোঁয়া হয় না
 KEY_COOLDOWN = 90  # সেকেন্ড: কোটা-শেষ কী এতক্ষণ বাদ থাকে, তারপর আবার চেষ্টা (মিনিটের সীমা হলে ফিরে আসে)
 _KEY_STATE = {"i": 0}
 _COOLDOWN = {}  # (মডেল, কী-নম্বর) -> কখন পর্যন্ত বাদ
@@ -159,7 +165,7 @@ def _post_rotating(model, body, retries, timeout):
             if e.kind not in ("quota", "key"):
                 raise
             last = e
-            _COOLDOWN[(model, idx)] = time.time() + KEY_COOLDOWN
+            _COOLDOWN[(model, idx)] = time.time() + (DAILY_COOLDOWN if e.daily else KEY_COOLDOWN)
             if n > 1:
                 why = "কোটা শেষ" if e.kind == "quota" else "কী কাজ করছে না"
                 nxt = (idx + 1) % n + 1
@@ -168,7 +174,7 @@ def _post_rotating(model, body, retries, timeout):
         raise LLMError(f"ফ্রি কোটা বা রেট লিমিট শেষ (সব {n}টি কী-ই এই মডেলে ব্যস্ত)। কিছুক্ষণ পরে আবার চালান",
                        fatal=True, kind="quota")
     if n > 1:
-        last = LLMError(f"সব {n}টি Gemini কী-তেই সমস্যা: {last}", fatal=last.fatal, kind=last.kind)
+        last = LLMError(f"সব {n}টি Gemini কী-তেই সমস্যা: {last}", fatal=last.fatal, kind=last.kind, daily=last.daily)
     raise last
 
 

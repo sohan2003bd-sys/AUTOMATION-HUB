@@ -101,5 +101,23 @@ class KeyRotation(unittest.TestCase):
             self.assertEqual(llm.gemini_keys(), ["A", "B", "C"])
 
 
+class DailyQuota(unittest.TestCase):
+    def test_daily_quota_not_retried_and_skipped_later(self):
+        daily = _resp(429, "GenerateRequestsPerDayPerProjectPerModel-FreeTier")
+        llm._COOLDOWN.clear()
+        llm._KEY_STATE["i"] = 0
+        env = dict(ENV_CLEAN, GEMINI_API_KEY="k1", GEMINI_API_KEY_2="k2")
+        with mock.patch.dict(os.environ, env), mock.patch("time.sleep"), \
+                mock.patch("requests.post", return_value=daily) as post:
+            with self.assertRaises(llm.LLMError):
+                llm._post_rotating("m", {}, 3, 10)
+            self.assertEqual(post.call_count, 2)       # প্রতি কী-তে ১বার, রিট্রাই নয়
+            with self.assertRaises(llm.LLMError) as cm:
+                llm._post_rotating("m", {}, 3, 10)
+            self.assertEqual(post.call_count, 2)       # দ্বিতীয়বার কোনো HTTP কল নয়
+            self.assertTrue(cm.exception.fatal)
+        llm._COOLDOWN.clear()
+
+
 if __name__ == "__main__":
     unittest.main()

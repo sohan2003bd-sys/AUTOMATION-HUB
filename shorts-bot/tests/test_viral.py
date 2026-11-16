@@ -172,7 +172,7 @@ class ConfigSanity(unittest.TestCase):
         self.assertEqual(cfg["video"]["style"], "subtitles")
         self.assertEqual(cfg["limits"]["monthly_max"], 60)
         self.assertEqual(len(cfg["upload"]["slots"]), 2)
-        self.assertTrue(cfg["research"]["enabled"] and cfg["research"]["verify"])
+        self.assertTrue(cfg["research"]["enabled"] and not cfg["research"]["verify"])  # verify টোকেন বাঁচাতে বন্ধ
         genders = {v["gender"] for v in cfg["tts"]["voices"]}
         self.assertEqual(genders, {"female", "male"})
         ids = [c["id"] for c in cfg["categories"]]

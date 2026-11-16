@@ -50,7 +50,7 @@ def refill(cfg, store, count, budget_sec=300):
 
         def fresh_n(c):
             return sum(1 for r in store.rows if r["category"] == c["id"] and r["status"] in live
-                       and now - r.get("created", 0) < 20 * 3600)
+                       and now - r.get("created", 0) < 40 * 3600)
 
         need = count * 2
         have = sum(fresh_n(c) for c in news)
@@ -61,7 +61,7 @@ def refill(cfg, store, count, budget_sec=300):
         for c in sorted(news, key=lambda c: (fresh_n(c), done_n.get(c["id"], 0))):
             if have >= need or state["stop"]:
                 break
-            have += run_job(c, 3)
+            have += run_job(c, 6)   # একবারে বেশি আইডিয়া = কম কল
     if state["stop"] or state["left"] >= count * 2:
         return errors
     target = count * 5
@@ -155,7 +155,7 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
     stopped = False
     queue = list(todo)
     tried = {r["id"] for r in todo}
-    spare = 3                       # ফ্যাক্ট-চেকে বাতিল হলে সর্বোচ্চ এতগুলো বিকল্প আইডিয়া নেওয়া হবে
+    spare = 1                       # ফ্যাক্ট-চেকে বাতিল হলে সর্বোচ্চ এতগুলো বিকল্প আইডিয়া নেওয়া হবে
     k = -1
     while queue:
         rec = queue.pop(0)
