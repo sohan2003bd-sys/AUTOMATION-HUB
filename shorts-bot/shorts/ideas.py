@@ -67,13 +67,21 @@ def _plain(cfg, store, cat, count):
 
 def generate_for_category(cfg, store, cat, count):
     items = []
+    no_search = False
     if (cfg.get("ideas") or {}).get("trending") and cfg["llm"]["provider"] == "gemini":
         try:
             items = _trending(cfg, store, cat, count)
         except llm.LLMError as e:
             if e.fatal:
                 raise
+            no_search = True
             print(f"  ⚠ আজকের আলোচিত বিষয় খোঁজা যায়নি ({e}); সাধারণ আইডিয়ায় যাচ্ছি", file=sys.stderr)
     if not items:
+        # সার্চ ছাড়া মডেল আজকের খবর জানে না, গুজব/ভুল বানাতে পারে — তাই টাটকা-থাকা-দরকার ক্যাটাগরি বাদ
+        # (ইচ্ছা করলে config-এ ideas.allow_news_without_search: true)
+        if (no_search or llm.grounding_down()) and not cat.get("evergreen", True) \
+                and not (cfg.get("ideas") or {}).get("allow_news_without_search", False):
+            print(f"  ⚠ {cat['name']}: সার্চ ছাড়া আজকের খবরভিত্তিক আইডিয়া নিরাপদ নয়, বাদ দিলাম", file=sys.stderr)
+            return 0
         items = _plain(cfg, store, cat, count)
     return store.add_topics(cat["id"], items)

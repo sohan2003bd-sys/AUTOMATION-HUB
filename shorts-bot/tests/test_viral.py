@@ -179,5 +179,21 @@ class ConfigSanity(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
 
 
+class NoSearchFallback(unittest.TestCase):
+    def test_news_skipped_evergreen_plain_when_search_down(self):
+        from shorts import ideas, llm
+        cfg = {"ideas": {"trending": True}, "llm": {"provider": "gemini"}}
+        news = {"id": "money", "name": "টাকা", "evergreen": False}
+        ever = {"id": "health", "name": "স্বাস্থ্য", "evergreen": True}
+        err = llm.LLMError("x", fatal=False, kind="grounding")
+        store = mock.Mock(); store.add_topics.side_effect = lambda c, items: len(items)
+        with mock.patch.object(ideas, "_trending", side_effect=err), \
+                mock.patch.object(ideas, "_plain", return_value=["a", "b"]) as plain:
+            self.assertEqual(ideas.generate_for_category(cfg, store, news, 2), 0)
+            plain.assert_not_called()
+            self.assertEqual(ideas.generate_for_category(cfg, store, ever, 2), 2)
+            plain.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

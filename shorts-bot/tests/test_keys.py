@@ -136,5 +136,31 @@ class QuotaDetail(unittest.TestCase):
         self.assertEqual(llm._quota_detail("not json"), ("", False))
 
 
+class GroundingDown(unittest.TestCase):
+    def setUp(self):
+        llm._COOLDOWN.clear(); llm._GROUND["down"] = False; llm._KEY_STATE["i"] = 0
+
+    def tearDown(self):
+        llm._COOLDOWN.clear(); llm._GROUND["down"] = False
+
+    def test_grounded_429_flags_and_plain_still_works(self):
+        env = dict(ENV_CLEAN, GEMINI_API_KEY="k1")
+        cfg = {"llm": {"provider": "gemini", "gemini_model": "m", "gemini_fallback_model": ""}}
+
+        def fake_post(url, headers=None, json=None, timeout=None):
+            return _resp(429, "quota") if json.get("tools") else GOOD
+        with mock.patch.dict(os.environ, env), mock.patch("time.sleep"), \
+                mock.patch("requests.post", side_effect=fake_post) as post:
+            with self.assertRaises(llm.LLMError) as cm:
+                llm.complete_grounded(cfg, "s", "u")
+            self.assertEqual(cm.exception.kind, "grounding")
+            self.assertFalse(cm.exception.fatal)
+            n = post.call_count
+            with self.assertRaises(llm.LLMError):          # দ্বিতীয়বার কোনো HTTP কল নয়
+                llm.complete_grounded(cfg, "s", "u")
+            self.assertEqual(post.call_count, n)
+            self.assertEqual(llm.complete(cfg, "s", "u"), "ok")  # সাধারণ অনুরোধ আটকায়নি
+
+
 if __name__ == "__main__":
     unittest.main()

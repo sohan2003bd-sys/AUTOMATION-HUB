@@ -142,7 +142,8 @@ KEY_NAMES = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 11)]
 DAILY_COOLDOWN = 6 * 3600  # দৈনিক কোটা শেষ হলে এই রানে ওই (মডেল, কী) আর ছোঁয়া হয় না
 KEY_COOLDOWN = 90  # সেকেন্ড: কোটা-শেষ কী এতক্ষণ বাদ থাকে, তারপর আবার চেষ্টা (মিনিটের সীমা হলে ফিরে আসে)
 _KEY_STATE = {"i": 0}
-_COOLDOWN = {}  # (মডেল, কী-নম্বর) -> কখন পর্যন্ত বাদ
+_COOLDOWN = {}  # (মডেল, কী-নম্বর, সার্চসহ?) -> কখন পর্যন্ত বাদ
+_GROUND = {"down": False}  # গুগল-সার্চ (গ্রাউন্ডিং) এই রানে পাওয়া যাচ্ছে না
 
 
 def gemini_keys():
@@ -177,7 +178,8 @@ def _post_rotating(model, body, retries, timeout):
     last = None
     for step in range(n):
         idx = (start + step) % n
-        until = _COOLDOWN.get((model, idx), 0)
+        ck = (model, idx, bool(body.get("tools")))  # গুগল-সার্চসহ আর সাধারণ অনুরোধের কোটা আলাদা
+        until = _COOLDOWN.get(ck, 0)
         if time.time() < until:
             continue
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={keys[idx]}"
@@ -190,7 +192,7 @@ def _post_rotating(model, body, retries, timeout):
             if e.kind not in ("quota", "key"):
                 raise
             last = e
-            _COOLDOWN[(model, idx)] = time.time() + (DAILY_COOLDOWN if e.daily else KEY_COOLDOWN)
+            _COOLDOWN[ck] = time.time() + (DAILY_COOLDOWN if e.daily else KEY_COOLDOWN)
             if n > 1:
                 why = "কোটা শেষ" if e.kind == "quota" else "কী কাজ করছে না"
                 nxt = (idx + 1) % n + 1
@@ -259,10 +261,23 @@ def complete_grounded(cfg, system, user, max_tokens=3000, temperature=0.4):
     """গুগল সার্চে যাচাই করা (grounded) উত্তর। শুধু Gemini-তে চলে। ফেরত: (লেখা, উৎসের তালিকা)।"""
     if cfg["llm"]["provider"] != "gemini":
         raise LLMError("ওয়েব গবেষণা শুধু Gemini provider-এ চলে", fatal=False, kind="other")
+    if _GROUND["down"]:  # একবার 429 পেলে বাকি রানে আর চেষ্টা নয় (সময় ও অনুরোধ বাঁচে)
+        raise LLMError("গুগল-সার্চ (গ্রাউন্ডিং) এই রানে বন্ধ — আগেই কোটা-সমস্যা পাওয়া গেছে", fatal=False, kind="grounding")
     llm_cfg = cfg["llm"]
-    return _run_gemini(cfg, None, lambda model, key, retries: _gemini_full(
-        llm_cfg, model, key, system, user, max_tokens, temperature, retries,
-        tools=[{"google_search": {}}], json_mode=False, timeout=120))
+    try:
+        return _run_gemini(cfg, None, lambda model, key, retries: _gemini_full(
+            llm_cfg, model, key, system, user, max_tokens, temperature, retries,
+            tools=[{"google_search": {}}], json_mode=False, timeout=120))
+    except LLMError as e:
+        if e.kind == "quota":
+            _GROUND["down"] = True
+            raise LLMError("গুগল-সার্চ (গ্রাউন্ডিং)-এর কোটা নেই — ফ্রি টিয়ারে এটা বন্ধ বা খুব সীমিত থাকতে পারে (সাধারণ অনুরোধ আলাদা ও চলছে)",
+                           fatal=False, kind="grounding")
+        raise
+
+
+def grounding_down() -> bool:
+    return _GROUND["down"]
 
 
 def transcribe_audio(cfg, audio_path, instruction, max_tokens=4000):
