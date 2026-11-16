@@ -1,0 +1,52 @@
+# ====== সাধারণ ======
+channel:
+  handle: "@your_channel"      # ভিডিওর নিচে ওয়াটারমার্ক; ফাঁকা রাখলে দেখাবে না
+
+llm:
+  provider: gemini             # anthropic | gemini
+  anthropic_model: claude-haiku-5-5
+  gemini_model: gemini-2.5-flash
+  # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
+
+tts:
+  engine: edge                 # edge (বাংলা ভয়েস, ইন্টারনেট লাগবে) | silent (শুধু পরীক্ষার জন্য)
+  voice: bn-BD-NabanitaNeural  # নারী। পুরুষ: bn-BD-PradeepNeural
+  rate: "+0%"                  # কথার গতি, যেমন "-5%" বা "+8%"
+
+video:
+  width: 1080
+  height: 1920
+  fps: 30
+  motion: zoom                 # zoom (হালকা জুম) | none (স্থির, দ্রুত রেন্ডার)
+  font: ""                     # বাংলা ফন্টের পাথ। ফাঁকা থাকলে নিজে খুঁজে নেবে (Noto Sans Bengali)
+
+script:
+  target_seconds: 30       # প্রতি ভিডিওর লক্ষ্য দৈর্ঘ্য (বাংলা ভয়েসে প্রায় ২ শব্দ/সেকেন্ড)
+  min_words: 55
+  max_words: 85
+  max_retries: 3
+
+upload:
+  privacy: private             # private (শুরুতে নিরাপদ) | public | unlisted | schedule
+  category_id: "28"            # 28 = Science & Technology
+  language: bn
+  notify_subscribers: false    # ১০টি করে আপলোডে সাবস্ক্রাইবারকে বারবার নোটিফিকেশন না পাঠাতে
+  timezone_offset_hours: 6     # বাংলাদেশ = +6
+  slots: ["07:30", "09:00", "10:30", "12:00", "13:30", "15:00", "17:00", "19:00", "20:30", "22:00"]  # schedule মোডে প্রকাশের সময়
+
+paths:
+  data_dir: data
+  out_dir: output
+
+# ====== ১০টি ক্যাটাগরি ======
+categories:
+  - {id: ai_tools,   name: "AI টুল ও প্রম্পট",        accent: "#7C5CFF", hint: "ChatGPT, Gemini, Claude ইত্যাদি AI টুল ব্যবহারের কাজের টিপস ও ভালো প্রম্পট লেখার কৌশল"}
+  - {id: android,    name: "অ্যান্ড্রয়েড টিপস",       accent: "#22C55E", hint: "অ্যান্ড্রয়েড ফোনের কম-জানা কিন্তু কাজের সেটিংস ও ফিচার"}
+  - {id: phone_care, name: "ফোনের যত্ন",               accent: "#F59E0B", hint: "ফোনের ব্যাটারি, স্টোরেজ, স্পিড ও ফোন ভালো রাখার সঠিক নিয়ম"}
+  - {id: security,   name: "অনলাইন নিরাপত্তা",         accent: "#EF4444", hint: "পাসওয়ার্ড, টু-স্টেপ ভেরিফিকেশন, স্ক্যাম ও প্রতারণা চেনা ও এড়ানো"}
+  - {id: social,     name: "হোয়াটসঅ্যাপ ও ফেসবুক",    accent: "#06B6D4", hint: "হোয়াটসঅ্যাপ, ফেসবুক, মেসেঞ্জারের কাজের ফিচার ও প্রাইভেসি সেটিংস"}
+  - {id: google,     name: "গুগল টুলস",                accent: "#3B82F6", hint: "গুগল সার্চ, ম্যাপ, ড্রাইভ, জিমেইল, ট্রান্সলেট-এর কাজের টিপস"}
+  - {id: office,     name: "এক্সেল ও অফিস",            accent: "#10B981", hint: "এক্সেল, গুগল শিট, ওয়ার্ড, পিডিএফ-এর সহজ কিন্তু কাজের কৌশল"}
+  - {id: pc,         name: "কম্পিউটার টিপস",           accent: "#F97316", hint: "উইন্ডোজ কম্পিউটারের শর্টকাট, স্পিড বাড়ানো ও সেটিংস"}
+  - {id: internet,   name: "ইন্টারনেট ও ওয়াইফাই",     accent: "#EC4899", hint: "ওয়াইফাই স্পিড, মোবাইল ডেটা সাশ্রয়, রাউটার সেটিংস"}
+  - {id: learn,      name: "প্রযুক্তি সহজে",           accent: "#A855F7", hint: "ক্লাউড, AI, ইন্টারনেট, অ্যাপ ইত্যাদি প্রযুক্তির ধারণা একদম সহজ ভাষায়"}
