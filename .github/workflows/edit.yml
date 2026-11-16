@@ -1,0 +1,70 @@
+name: edit-my-video
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "রিপোর ভেতরের ভিডিও বা ফোল্ডার (যেমন inbox/ অথবা inbox/video1.mp4)"
+        default: "inbox/"
+      upload:
+        description: "এডিটের পর ইউটিউবে আপলোড করবে?"
+        type: boolean
+        default: false
+      privacy:
+        description: "আপলোড করলে প্রকাশের ধরন"
+        type: choice
+        options: [private, unlisted, public]
+        default: private
+      captions:
+        description: "ক্যাপশন যোগ করবে? (Gemini লাগে)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  edit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: shorts-bot
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: shorts-bot/requirements.txt
+
+      - name: FFmpeg ও বাংলা ফন্ট
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-core libraqm0 libfribidi0
+
+      - run: pip install -r requirements.txt
+
+      - name: স্মার্ট এডিট
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TARGET: ${{ github.event.inputs.path }}
+          UPLOAD: ${{ github.event.inputs.upload }}
+          PRIVACY: ${{ github.event.inputs.privacy }}
+          CAPTIONS: ${{ github.event.inputs.captions }}
+        run: |
+          ARGS=""
+          if [ "$UPLOAD" = "true" ]; then ARGS="$ARGS --upload --privacy $PRIVACY"; fi
+          if [ "$CAPTIONS" != "true" ]; then ARGS="$ARGS --no-captions"; fi
+          python -m shorts edit "$TARGET" $ARGS
+
+      - name: এডিট করা ভিডিও নামিয়ে নিন (Artifacts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edited-videos
+          path: shorts-bot/output/edit-*
+          retention-days: 7

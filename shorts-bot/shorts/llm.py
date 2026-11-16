@@ -67,29 +67,77 @@ def _post(url, headers, body, retries=3, timeout=60):
     raise LLMError(_redact(f"{why} [{last or 'অজানা ত্রুটি'}]"), fatal=fatal, kind=kind)
 
 
-def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries):
-    gen = {"maxOutputTokens": max_tokens * 3,  # Gemini 3.x-এ চিন্তার (thinking) টোকেনও এই সীমায় গোনা হয়
-           "responseMimeType": "application/json"}
+def _gemini_full(llm_cfg, model, key, system, user, max_tokens, temperature, retries,
+                 tools=None, json_mode=True, extra_parts=None, timeout=60):
+    """Gemini-কে অনুরোধ। ফেরত: (লেখা, উৎসের তালিকা)।
+    tools দিলে (যেমন গুগল সার্চ) JSON মোড বন্ধ থাকে; extra_parts দিয়ে অডিও/ছবি পাঠানো যায়।"""
+    gen = {"maxOutputTokens": max_tokens * 3}  # Gemini 3.x-এ চিন্তার (thinking) টোকেনও এই সীমায় গোনা হয়
+    if json_mode and not tools:
+        gen["responseMimeType"] = "application/json"
     if model.startswith("gemini-3"):
         # Gemini 3.x: নিচু চিন্তার স্তরে দ্রুত উত্তর (low | medium | high); temperature এখানে বাদ
         gen["thinkingConfig"] = {"thinkingLevel": llm_cfg.get("gemini_thinking", "low")}
     else:
         gen["temperature"] = temperature
+    parts = list(extra_parts or []) + [{"text": user}]
+    body = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": gen,
+    }
+    if tools:
+        body["tools"] = tools
     data = _post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
-        {"content-type": "application/json"},
-        {
-            "systemInstruction": {"parts": [{"text": system}]},
-            "contents": [{"role": "user", "parts": [{"text": user}]}],
-            "generationConfig": gen,
-        },
-        retries=retries,
+        {"content-type": "application/json"}, body, retries=retries, timeout=timeout,
     )
     try:
-        parts = data["candidates"][0]["content"]["parts"]
+        cand = data["candidates"][0]
+        parts = cand["content"]["parts"]
     except (KeyError, IndexError):
         raise LLMError(f"Gemini থেকে খালি উত্তর: {_redact(str(data)[:300])}")
-    return "".join(p.get("text", "") for p in parts if not p.get("thought"))
+    sources = []
+    for ch in (cand.get("groundingMetadata") or {}).get("groundingChunks", []) or []:
+        w = ch.get("web") or {}
+        if w.get("uri"):
+            sources.append({"title": w.get("title", ""), "uri": w["uri"]})
+    return "".join(p.get("text", "") for p in parts if not p.get("thought")), sources
+
+
+def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries):
+    return _gemini_full(llm_cfg, model, key, system, user, max_tokens, temperature, retries)[0]
+
+
+def _gemini_key():
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        raise LLMError("GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
+                       "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন)",
+                       fatal=True, kind="key")
+    return key
+
+
+def _run_gemini(cfg, task, call):
+    """call(model, key, retries) চালায়; প্রধান মডেল ব্যর্থ হলে বিকল্প মডেলে চেষ্টা করে।"""
+    key = _gemini_key()
+    llm_cfg = cfg["llm"]
+    primary = llm_cfg["gemini_model"]
+    fallback = llm_cfg.get("gemini_fallback_model")
+    if task == "ideas":  # ফাঁকা থাকলে স্ক্রিপ্টের মডেলই চলবে
+        primary = llm_cfg.get("gemini_idea_model") or primary
+        fallback = llm_cfg.get("gemini_idea_fallback_model") or fallback
+    try:
+        return call(primary, key, 3)
+    except LLMError as e:
+        # কী ঠিক না থাকলে বিকল্প মডেলে লাভ নেই; বাকি ক্ষেত্রে (চাপ, কোটা, নাম) বিকল্প চেষ্টা করি
+        if not fallback or fallback == primary or e.kind == "key":
+            raise
+        print(f"  ⚠ {primary} কাজ করেনি, {fallback} দিয়ে চেষ্টা করছি", file=sys.stderr)
+        try:
+            return call(fallback, key, 2)
+        except LLMError as e2:
+            raise LLMError(f"{e} | বিকল্প মডেল {fallback}-ও ব্যর্থ: {e2}", fatal=e.fatal and e2.fatal,
+                           kind=e.kind)
 
 
 def complete(cfg, system, user, max_tokens=4000, temperature=0.9, task=None) -> str:
@@ -113,29 +161,35 @@ def complete(cfg, system, user, max_tokens=4000, temperature=0.9, task=None) -> 
         )
         return "".join(b.get("text", "") for b in data.get("content", []))
     if provider == "gemini":
-        key = os.environ.get("GEMINI_API_KEY", "").strip()
-        if not key:
-            raise LLMError("GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
-                           "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন)", fatal=True, kind="key")
         llm_cfg = cfg["llm"]
-        primary = llm_cfg["gemini_model"]
-        fallback = llm_cfg.get("gemini_fallback_model")
-        if task == "ideas":  # ফাঁকা থাকলে স্ক্রিপ্টের মডেলই চলবে
-            primary = llm_cfg.get("gemini_idea_model") or primary
-            fallback = llm_cfg.get("gemini_idea_fallback_model") or fallback
-        try:
-            return _gemini(llm_cfg, primary, key, system, user, max_tokens, temperature, retries=3)
-        except LLMError as e:
-            # কী ঠিক না থাকলে বিকল্প মডেলে লাভ নেই; বাকি ক্ষেত্রে (চাপ, কোটা, নাম) বিকল্প চেষ্টা করি
-            if not fallback or fallback == primary or e.kind == "key":
-                raise
-            print(f"  ⚠ {primary} কাজ করেনি, {fallback} দিয়ে চেষ্টা করছি", file=sys.stderr)
-            try:
-                return _gemini(llm_cfg, fallback, key, system, user, max_tokens, temperature, retries=2)
-            except LLMError as e2:
-                raise LLMError(f"{e} | বিকল্প মডেল {fallback}-ও ব্যর্থ: {e2}", fatal=e.fatal and e2.fatal,
-                               kind=e.kind)
+        return _run_gemini(cfg, task, lambda model, key, retries: _gemini(
+            llm_cfg, model, key, system, user, max_tokens, temperature, retries))
     raise LLMError(f"অজানা provider: {provider} (config.yaml-এ anthropic বা gemini লিখুন)", fatal=True, kind="key")
+
+
+def complete_grounded(cfg, system, user, max_tokens=3000, temperature=0.4):
+    """গুগল সার্চে যাচাই করা (grounded) উত্তর। শুধু Gemini-তে চলে। ফেরত: (লেখা, উৎসের তালিকা)।"""
+    if cfg["llm"]["provider"] != "gemini":
+        raise LLMError("ওয়েব গবেষণা শুধু Gemini provider-এ চলে", fatal=False, kind="other")
+    llm_cfg = cfg["llm"]
+    return _run_gemini(cfg, None, lambda model, key, retries: _gemini_full(
+        llm_cfg, model, key, system, user, max_tokens, temperature, retries,
+        tools=[{"google_search": {}}], json_mode=False, timeout=120))
+
+
+def transcribe_audio(cfg, audio_path, instruction, max_tokens=4000):
+    """অডিও ফাইল (ছোট mp3/wav, ~১৫ এমবি পর্যন্ত) Gemini-কে শুনিয়ে JSON উত্তর নেয়। শুধু Gemini।"""
+    import base64
+    from pathlib import Path
+    if cfg["llm"]["provider"] != "gemini":
+        raise LLMError("অডিও থেকে ক্যাপশন বানাতে llm.provider: gemini লাগবে", fatal=True, kind="other")
+    p = Path(audio_path)
+    mime = {".mp3": "audio/mp3", ".wav": "audio/wav", ".m4a": "audio/mp4", ".ogg": "audio/ogg"}.get(p.suffix.lower(), "audio/mp3")
+    part = {"inline_data": {"mime_type": mime, "data": base64.b64encode(p.read_bytes()).decode()}}
+    llm_cfg = cfg["llm"]
+    return _run_gemini(cfg, None, lambda model, key, retries: _gemini_full(
+        llm_cfg, model, key, "তুমি নিখুঁত বাংলা ট্রান্সক্রাইবার। কেবল JSON দেবে।", instruction, max_tokens, 0.2,
+        retries, extra_parts=[part], timeout=180)[0])
 
 
 def extract_json(text: str):

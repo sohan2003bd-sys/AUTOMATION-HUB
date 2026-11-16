@@ -19,28 +19,36 @@ SYSTEM = (
     "দেখা যায় তেমন লেখো। (২) নিশ্চিত না হলে সেই ধাপ বাদ দাও, আন্দাজে কিছু লিখো না। "
     "(৩) ভুয়া পরিসংখ্যান, অতিরঞ্জন, ভয় দেখানো, আয়ের প্রতিশ্রুতি নয়। (৪) প্রতিটি ভিডিওতে "
     "অন্তত একটা নির্দিষ্ট, কাজে লাগার মতো জিনিস থাকবে—সাধারণ উপদেশ নয়। "
-    "(৫) উত্তর কেবল একটা JSON অবজেক্ট।"
+    "(৫) যাচাই করা তথ্যের তালিকা দেওয়া থাকলে কেবল সেই তালিকার তথ্য ব্যবহার করবে, নিজে থেকে নতুন দাবি যোগ করবে না। "
+    "(৬) উত্তর কেবল একটা JSON অবজেক্ট।"
 )
 
 
-def build_prompt(cfg, cat, topic, seed):
+def build_prompt(cfg, cat, topic, seed, facts=None):
     rnd = random.Random(seed)
     hook_style = rnd.choice(HOOK_STYLES)
     lo, hi = cfg["script"]["min_words"], cfg["script"]["max_words"]
+    fact_block = ""
+    if facts:
+        fact_block = "যাচাই করা তথ্য (শুধু এগুলোই ব্যবহার করবে):\n" + "\n".join(f"- {f}" for f in facts) + "\n\n"
     return (
-        f"ক্যাটাগরি: {cat['name']}\nবিষয়: {topic}\n\n"
+        f"ক্যাটাগরি: {cat['name']}\nবিষয়: {topic}\n\n{fact_block}"
         f"এই বিষয়ে প্রায় {cfg['script']['target_seconds']} সেকেন্ডের একটা Shorts-এর স্ক্রিপ্ট লেখো।\n"
         f"- হুক (প্রথম দৃশ্য): {hook_style}।\n"
         f"- মোট ৫–৭টি দৃশ্য। সব দৃশ্যের narration মিলিয়ে {lo}–{hi}টি শব্দ।\n"
         "- narration: ভয়েসওভারের বাংলা বাক্য। সংখ্যা কথায় বা বাংলা অঙ্কে লেখো। "
         "জনপ্রিয় ইংরেজি শব্দ (যেমন ফোন, অ্যাপ, ওয়াইফাই) বাংলা অক্ষরে লেখো, যাতে ভয়েস ঠিকভাবে পড়ে।\n"
         "- screen_text: পর্দায় যা দেখাবে—সর্বোচ্চ ৮টি শব্দ। মেনুর নাম ইংরেজিতে থাকতে পারে।\n"
+        "- highlight: screen_text-এর ভেতরের সবচেয়ে গুরুত্বপূর্ণ ১–২টি শব্দ (হুবহু সেখান থেকে), যেটা রঙিন করে দেখানো হবে।\n"
+        "- visual_query: ইংরেজিতে ২–৪ শব্দের স্টক-ফুটেজ খোঁজার কিওয়ার্ড—দৃশ্যের কথার সঙ্গে মেলে এমন বাস্তব, "
+        "ক্যামেরায় তোলা যায় এমন জিনিস (যেমন \"person typing on laptop\", \"smartphone close up\", \"wifi router\"). "
+        "কোনো ব্র্যান্ডের নাম, লোগো বা লেখা দেবে না।\n"
         "- kind: hook | step | tip | outro। শেষ দৃশ্য outro: একটা এক লাইনের সারকথা। "
         "'লাইক/সাবস্ক্রাইব করুন' ধরনের একই লাইন বারবার দেবে না।\n"
         "- title: ৬০ অক্ষরের মধ্যে আকর্ষণীয়, বাংলা শিরোনাম (ক্লিকবেইট নয়)।\n"
         "- description: ২–৩ লাইন বাংলা বিবরণ। tags: ৮–১২টি, বাংলা ও ইংরেজি মিশিয়ে।\n\n"
         'ফরম্যাট: {"title": "...", "description": "...", "tags": ["..."], '
-        '"scenes": [{"kind": "hook", "narration": "...", "screen_text": "..."}]}'
+        '"scenes": [{"kind": "hook", "narration": "...", "screen_text": "...", "highlight": "...", "visual_query": "..."}]}'
     )
 
 
@@ -55,8 +63,11 @@ def validate(cfg, d):
         narr = str(s.get("narration", "")).strip()
         text = str(s.get("screen_text", "")).strip()[:80]
         kind = s.get("kind") if s.get("kind") in KINDS else "step"
+        hl = str(s.get("highlight", "")).strip()
+        vq = " ".join(str(s.get("visual_query", "")).split())[:60]
         if narr and text:
-            scenes.append({"kind": kind, "narration": narr, "screen_text": text})
+            scenes.append({"kind": kind, "narration": narr, "screen_text": text,
+                           "highlight": hl if hl and hl in text else "", "visual_query": vq})
     if not 4 <= len(scenes) <= 10:
         raise ValueError(f"দৃশ্যের সংখ্যা ঠিক নয়: {len(scenes)}")
     words = sum(len(s["narration"].split()) for s in scenes)
@@ -68,10 +79,10 @@ def validate(cfg, d):
             "tags": tags, "scenes": scenes}
 
 
-def generate(cfg, cat, rec):
+def generate(cfg, cat, rec, facts=None):
     last = None
     for attempt in range(cfg["script"]["max_retries"]):
-        prompt = build_prompt(cfg, cat, rec["topic"], f"{rec['id']}-{attempt}")
+        prompt = build_prompt(cfg, cat, rec["topic"], f"{rec['id']}-{attempt}", facts)
         try:
             raw = llm.complete(cfg, SYSTEM, prompt, max_tokens=3500, temperature=0.9)
             return validate(cfg, extract_json(raw))

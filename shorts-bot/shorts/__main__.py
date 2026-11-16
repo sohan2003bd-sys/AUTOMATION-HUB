@@ -4,13 +4,21 @@
   python -m shorts make --count 3                # বাকি আইডিয়া থেকে ভিডিও বানাও
   python -m shorts status                        # অবস্থা দেখো
   python -m shorts auth-check                    # ইউটিউব টোকেন ঠিক আছে কিনা দেখো
+  python -m shorts doctor                        # সবকিছু ঠিকমতো বসানো আছে কিনা দেখো (ffmpeg, ফন্ট, কী, ট্রানজিশন)
+  python -m shorts edit ভিডিও.mp4|ফোল্ডার/ [--upload] [--privacy private] [--no-captions]
+      # নিজের ভিডিও স্মার্ট এডিট: নীরবতা কাটা, ৯:১৬, ক্যাপশন, ভয়েস মাস্টারিং, টাইটেল
   python -m shorts run --count 10 [--privacy private|public|schedule]
       # আইডিয়া ভরা → ভিডিও → ইউটিউবে আপলোড (প্রতিদিন GitHub Actions এটাই চালায়)
 """
 import argparse
 import sys
 
-from . import config, ideas, pipeline, report, runner, samples, youtube
+import json
+import os
+import shutil
+import subprocess
+
+from . import config, ideas, media, pipeline, render, report, runner, samples, smartedit, youtube
 from .store import Store
 
 
@@ -25,26 +33,77 @@ def _write_summary(ok, bad, stopped, info):
     report.summary("\n".join(lines))
 
 
+def _doctor(cfg) -> int:
+    """সবকিছু ঠিকমতো বসানো কিনা পরীক্ষা (নেটওয়ার্ক কল ছাড়া)। সমস্যা থাকলে 1 ফেরত দেয়।"""
+    bad = 0
+
+    def line(ok, msg, fatal=True):
+        nonlocal bad
+        print(("✅ " if ok else ("❌ " if fatal else "⚠️  ")) + msg)
+        if not ok and fatal:
+            bad += 1
+
+    line(bool(shutil.which("ffmpeg") and shutil.which("ffprobe")), "FFmpeg")
+    if shutil.which("ffmpeg"):
+        out = subprocess.run(["ffmpeg", "-hide_banner", "-filters"], capture_output=True, text=True).stdout
+        line(" xfade " in out, "FFmpeg-এ xfade ট্রানজিশন আছে")
+        line(" sidechaincompress " in out and " loudnorm " in out, "FFmpeg-এ মিউজিক-ডাকিং ও লাউডনেস ফিল্টার আছে")
+    try:
+        line(True, "বাংলা ফন্ট: " + render.find_font(cfg))
+    except FileNotFoundError as ex:
+        line(False, str(ex))
+    from PIL import features
+    line(features.check("raqm"), "Pillow-তে Raqm (বাংলা যুক্তাক্ষর ঠিক রাখে)")
+    prov = cfg["llm"]["provider"]
+    keyname = "GEMINI_API_KEY" if prov == "gemini" else "ANTHROPIC_API_KEY"
+    line(bool(os.environ.get(keyname, "").strip()), f"{keyname} (llm.provider: {prov})")
+    if (cfg.get("research") or {}).get("enabled") and prov != "gemini":
+        line(False, "research চালু কিন্তু provider gemini নয় — গবেষণা বাদ যাবে", fatal=False)
+    if cfg["tts"]["engine"] == "gemini" and prov != "gemini" and not os.environ.get("GEMINI_API_KEY"):
+        line(False, "tts.engine: gemini-র জন্য GEMINI_API_KEY লাগবে (নইলে fallback edge চলবে)", fatal=False)
+    if (cfg.get("media") or {}).get("enabled"):
+        line(media.available(), "PEXELS_API_KEY বা PIXABAY_API_KEY (না থাকলে ডিজাইন-ব্যাকগ্রাউন্ড চলবে)", fatal=False)
+    for n in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN"):
+        line(bool(os.environ.get(n, "").strip()), n, fatal=False)
+    music = audio_music_count(cfg)
+    line(music > 0, f"assets/music-এ গান: {music}টি (০ হলে মিউজিক ছাড়া চলবে)", fatal=False)
+    line(cfg["channel"]["handle"] not in ("", "@your_channel"), "config.yaml-এ channel.handle বসানো", fatal=False)
+    print("\nসব ঠিক আছে ✅" if not bad else f"\n{bad}টি জরুরি সমস্যা ❌")
+    return 1 if bad else 0
+
+
+def audio_music_count(cfg) -> int:
+    from pathlib import Path
+    d = Path(cfg["_root"]) / (cfg.get("audio") or {}).get("music_dir", "assets/music")
+    return sum(1 for p in d.glob("*") if p.suffix.lower() in {".mp3", ".wav", ".m4a", ".ogg", ".aac"}) if d.exists() else 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="shorts")
     ap.add_argument("--config")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("demo")
-    d.add_argument("--tts", choices=["edge", "silent"], default="silent")
+    d.add_argument("--tts", choices=["gemini", "edge", "silent"], default="silent")
     i = sub.add_parser("ideas")
     i.add_argument("--per-category", type=int, default=20)
     i.add_argument("--category")
     m = sub.add_parser("make")
     m.add_argument("--count", type=int, default=1)
     m.add_argument("--category")
-    m.add_argument("--tts", choices=["edge", "silent"])
+    m.add_argument("--tts", choices=["gemini", "edge", "silent"])
     sub.add_parser("status")
     sub.add_parser("auth-check")
     r = sub.add_parser("run")
     r.add_argument("--count", type=int, default=1)
     r.add_argument("--privacy", choices=["private", "public", "unlisted", "schedule"])
-    r.add_argument("--tts", choices=["edge", "silent"])
+    r.add_argument("--tts", choices=["gemini", "edge", "silent"])
     r.add_argument("--no-upload", action="store_true")
+    e = sub.add_parser("edit")
+    e.add_argument("paths", nargs="+")
+    e.add_argument("--upload", action="store_true")
+    e.add_argument("--privacy", choices=["private", "public", "unlisted"])
+    e.add_argument("--no-captions", action="store_true")
+    sub.add_parser("doctor")
     a = ap.parse_args(argv)
 
     cfg = config.load(a.config)
@@ -105,6 +164,33 @@ def main(argv=None):
             sys.exit(1)
         if bad:
             report.warning(f"{bad}টি ভিডিও হয়নি", info["problems"][0])
+    elif a.cmd == "doctor":
+        sys.exit(_doctor(cfg))
+    elif a.cmd == "edit":
+        files = smartedit.collect(a.paths)
+        if not files:
+            print("কোনো ভিডিও ফাইল পাওয়া যায়নি", file=sys.stderr)
+            sys.exit(1)
+        done = 0
+        for f in files:
+            print("→", f)
+            try:
+                out, meta = smartedit.edit_one(cfg, f, config.out_dir(cfg), False if a.no_captions else None)
+            except Exception as ex:
+                print("  এডিট ব্যর্থ:", ex, file=sys.stderr)
+                continue
+            print("  তৈরি:", out, "|", meta["title"])
+            done += 1
+            if a.upload:
+                try:
+                    mode = a.privacy or cfg["upload"].get("privacy", "private")
+                    res = youtube.upload_video(cfg, youtube.get_access_token(), out, meta,
+                                               "private" if mode == "schedule" else mode, None)
+                    print(f"  আপলোড হয়েছে: https://youtube.com/shorts/{res['id']} ({res['privacy']})")
+                except youtube.YouTubeError as ex:
+                    print("  আপলোড ব্যর্থ:", ex, file=sys.stderr)
+        if done == 0:
+            sys.exit(1)
     elif a.cmd == "status":
         for c in cfg["categories"]:
             print(f"{c['name']:<24}", store.counts().get(c["id"], {}))

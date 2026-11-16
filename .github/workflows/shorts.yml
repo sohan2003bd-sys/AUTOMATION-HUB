@@ -42,6 +42,18 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      - name: সবকিছু ঠিক আছে কিনা দেখো (doctor)
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: python -m shorts doctor
+
       - name: ভিডিও বানাও ও আপলোড করো
         env:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
@@ -49,6 +61,8 @@ jobs:
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           COUNT: ${{ github.event.inputs.count || '10' }}
           PRIVACY: ${{ github.event.inputs.privacy || 'config' }}
         run: |

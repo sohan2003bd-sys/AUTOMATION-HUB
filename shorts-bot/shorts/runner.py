@@ -88,20 +88,36 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
 
     slots = []
     if upload and mode == "schedule":
-        slots = youtube.next_slots(cfg, len(todo), _last_publish(store))
+        slots = youtube.next_slots(cfg, len(todo) + 3, _last_publish(store))
 
     ok = bad = 0
     stopped = False
-    for k, rec in enumerate(todo):
+    queue = list(todo)
+    tried = {r["id"] for r in todo}
+    spare = 3                       # ফ্যাক্ট-চেকে বাতিল হলে সর্বোচ্চ এতগুলো বিকল্প আইডিয়া নেওয়া হবে
+    k = -1
+    while queue:
+        rec = queue.pop(0)
         print(f"→ {rec['id']} {rec['topic']}")
         try:
             video = pipeline.make_one(cfg, store, rec, engine)
+        except pipeline.Rejected as e:
+            print("  বাতিল:", e, file=sys.stderr)
+            problems.append(f"বাতিল (ফ্যাক্ট-চেক) — {rec['topic']}: {e}")
+            if spare > 0:
+                spare -= 1
+                extra = [r for r in store.pending("scripted", 30) + store.pending("idea", 30) if r["id"] not in tried]
+                if extra:
+                    tried.add(extra[0]["id"])
+                    queue.append(extra[0])
+            continue
         except Exception as e:
             store.update(rec["id"], error=str(e)[:300])
             print("  বানাতে ব্যর্থ:", e, file=sys.stderr)
             problems.append(f"বানাতে ব্যর্থ — {rec['topic']}: {e}")
             bad += 1
             continue
+        k += 1
         if not upload:
             ok += 1
             continue
