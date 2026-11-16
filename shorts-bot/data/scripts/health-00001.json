@@ -1,0 +1,57 @@
+{
+  "title": "শীতেও কমেনি ডেঙ্গুর ঝুঁকি, ঘর রাখুন নিরাপদ",
+  "description": "শীতের শুরুতে ডেঙ্গুর প্রকোপ থেকে বাঁচতে বাসাবাড়ির জমে থাকা পানি পরিষ্কার রাখার জরুরি সচেতনতামূলক বার্তা। জেনে নিন করণীয়।",
+  "tags": [
+    "ডেঙ্গু সতর্কতা",
+    "স্বাস্থ্য সচেতনতা",
+    "শীতকালীন স্বাস্থ্য",
+    "বাড়ি পরিষ্কার",
+    "dengue prevention",
+    "health tips bangla",
+    "mosquito control",
+    "winter health",
+    "bangladesh health",
+    "safe home"
+  ],
+  "tone": "urgent",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "শীত আসছে ভেবে কি ডেঙ্গুর ভয় ভুলে গেছেন? এই ভুল আপনার পরিবারের বড় বিপদ ডেকে আনতে পারে।",
+      "screen_text": "শীত আসছে ভেবে কি ডেঙ্গুর ভয় ভুলে",
+      "highlight": "",
+      "visual_query": "person looking worried by window"
+    },
+    {
+      "kind": "step",
+      "narration": "শুরু হওয়া এই ঠান্ডায় মশার উপদ্রব কম মনে হলেও, ঘরের ভেতরে কিন্তু ডেঙ্গু ছড়ানো এডিস মশার লার্ভা দিব্যি বেঁচে থাকে।",
+      "screen_text": "শুরু হওয়া এই ঠান্ডায় মশার উপদ্রব কম",
+      "highlight": "",
+      "visual_query": "mosquito resting on indoor wall"
+    },
+    {
+      "kind": "step",
+      "narration": "বিশেষ করে ফ্রিজের নিচে ট্রে, ফুলের টব বা এসির জমা পানিতে এই মশার বংশবৃদ্ধি থামছে না একটুও।",
+      "screen_text": "বিশেষ করে ফ্রিজের নিচে ট্রে, ফুলের টব",
+      "highlight": "",
+      "visual_query": "water dripping from indoor AC"
+    },
+    {
+      "kind": "tip",
+      "narration": "তাই সপ্তাহে অন্তত একবার ঘরের কোণায় জমে থাকা পানি ফেলে দিন এবং পাত্রগুলো একদম শুকনা রাখুন।",
+      "screen_text": "তাই সপ্তাহে অন্তত একবার ঘরের কোণায় জমে",
+      "highlight": "",
+      "visual_query": "woman wiping flower pot dry"
+    },
+    {
+      "kind": "outro",
+      "narration": "পরিষ্কার পরিচ্ছন্ন ছোট অভ্যাসেই সুরক্ষিত থাকুক আপনার পুরো পরিবার।",
+      "screen_text": "পরিষ্কার পরিচ্ছন্ন ছোট অভ্যাসেই সুরক্ষিত থাকুক আপনার",
+      "highlight": "",
+      "visual_query": "smiling family sitting together"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
