@@ -5,7 +5,7 @@ channel:
 llm:
   provider: gemini             # anthropic | gemini
   anthropic_model: claude-haiku-5-5
-  gemini_model: gemini-2.5-flash
+  gemini_model: gemini-3.8-flash
   # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
 
 tts:
