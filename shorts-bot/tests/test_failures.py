@@ -81,3 +81,73 @@ class Failures(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GeminiFallback(unittest.TestCase):
+    def _resp(self, status, body):
+        r = mock.Mock(status_code=status, text=str(body))
+        r.json.return_value = body
+        return r
+
+    def _cfg(self):
+        cfg = config.load()
+        cfg["llm"].update(provider="gemini", gemini_model="gemini-3.8-flash",
+                          gemini_fallback_model="gemini-3.6-flash", gemini_thinking="low")
+        return cfg
+
+    def test_body_has_low_thinking_and_bigger_token_limit(self):
+        ok = self._resp(200, {"candidates": [{"content": {"parts": [{"text": "[]"}]}}]})
+        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "k"}), \
+             mock.patch.object(llm.requests, "post", return_value=ok) as post:
+            self.assertEqual(llm.complete(self._cfg(), "s", "u", max_tokens=1000), "[]")
+        body = post.call_args.kwargs["json"]["generationConfig"]
+        self.assertEqual(body["thinkingConfig"], {"thinkingLevel": "low"})
+        self.assertEqual(body["maxOutputTokens"], 3000)
+        self.assertNotIn("temperature", body)
+
+    def test_server_busy_falls_back_to_second_model(self):
+        busy = self._resp(503, {"error": {"status": "UNAVAILABLE"}})
+        good = self._resp(200, {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]})
+        urls = []
+
+        def fake_post(url, **kw):
+            urls.append(url)
+            return busy if "3.8-flash" in url else good
+
+        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "k"}), \
+             mock.patch.object(llm.requests, "post", fake_post), mock.patch.object(llm.time, "sleep"):
+            self.assertEqual(llm.complete(self._cfg(), "s", "u"), "ok")
+        self.assertTrue(any("3.6-flash" in u for u in urls))
+
+    def test_bad_key_does_not_try_fallback(self):
+        bad = self._resp(400, {"error": {"message": "API key not valid"}})
+        urls = []
+        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "k"}), \
+             mock.patch.object(llm.requests, "post", lambda url, **kw: urls.append(url) or bad):
+            with self.assertRaises(llm.LLMError) as c:
+                llm.complete(self._cfg(), "s", "u")
+        self.assertEqual(c.exception.kind, "key")
+        self.assertEqual(len(urls), 1)
+
+    def test_refill_stops_when_enough_ideas(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg, store = _setup(d)
+            calls = []
+
+            def gen(cfg, store, cat, n):
+                calls.append(cat["id"])
+                pool = ["ফোনের ব্যাটারি বাঁচানোর উপায়", "পাসওয়ার্ড নিরাপদ রাখার কৌশল", "এক্সেলে দ্রুত যোগফলের শর্টকাট",
+                        "ওয়াইফাই স্পিড বাড়ানোর সেটিং", "হোয়াটসঅ্যাপে ভুল মেসেজ মুছুন"]
+                return store.add_topics(cat["id"], pool[:n])
+
+            with mock.patch.object(runner.ideas, "generate_for_category", gen):
+                runner.refill(cfg, store, 1)
+            self.assertLessEqual(len(calls), 3)  # ১০টি ক্যাটাগরিতে নয়
+
+    def test_refill_respects_time_budget(self):
+        with tempfile.TemporaryDirectory() as d:
+            cfg, store = _setup(d)
+            with mock.patch.object(runner.ideas, "generate_for_category", return_value=0) as g:
+                errs = runner.refill(cfg, store, 10, budget_sec=-1)
+            self.assertEqual(g.call_count, 0)
+            self.assertTrue(errs)

@@ -12,18 +12,27 @@ class RunError(RuntimeError):
     """কোনো ভিডিও বানানোই সম্ভব হয়নি — মেসেজে কারণ ও সমাধান থাকে।"""
 
 
-def refill(cfg, store, count):
-    """বাকি আইডিয়া কমে গেলে নতুন আইডিয়া বানায় (প্রায় ২ দিনের জোগান রাখে)।
+def refill(cfg, store, count, budget_sec=300):
+    """বাকি আইডিয়া কমে গেলে নতুন আইডিয়া বানায়।
+    যথেষ্ট জমলে থামে (পরীক্ষার রানে ১-৩টি কলই লাগে), AI ধীর হলে budget_sec-এর পর ছেড়ে দেয়।
     ফেরত: ত্রুটির তালিকা (কিছু ব্যর্থ হলে)।"""
     errors = []
     left = sum(1 for r in store.rows if r["status"] in ("idea", "scripted"))
     if left >= count * 2:
         return errors
-    cats = cfg["categories"]
-    per = max(3, math.ceil(count * 5 / len(cats)))
+    target = count * 5
+    cats = sorted(cfg["categories"], key=lambda c: len(store.topics(c["id"])))  # কম আইডিয়াওয়ালা আগে
+    per = max(2, math.ceil(target / len(cats)))
+    t0 = time.time()
     for c in cats:
+        if left >= target:
+            break
+        if time.time() - t0 > budget_sec:
+            errors.append(f"আইডিয়া বানাতে {budget_sec} সেকেন্ডের বেশি লাগছে, বাকিগুলো ছেড়ে দিলাম")
+            break
         try:
             n = ideas.generate_for_category(cfg, store, c, per)
+            left += n
             print(f"আইডিয়া: {c['name']} +{n}")
         except Exception as e:
             print(f"আইডিয়া ব্যর্থ: {c['name']} — {e}", file=sys.stderr)

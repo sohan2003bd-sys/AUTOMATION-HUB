@@ -6,6 +6,8 @@ llm:
   provider: gemini             # anthropic | gemini
   anthropic_model: claude-haiku-5-5
   gemini_model: gemini-3.8-flash
+  gemini_fallback_model: gemini-3.6-flash   # প্রধান মডেলে চাপ/সমস্যা হলে এটা দিয়ে চেষ্টা (ফাঁকা রাখলে বন্ধ)
+  gemini_thinking: low                      # low (দ্রুত) | medium | high — Gemini 3.x-এর চিন্তার স্তর
   # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
 
 tts:
