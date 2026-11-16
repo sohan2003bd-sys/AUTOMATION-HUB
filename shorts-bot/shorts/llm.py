@@ -27,6 +27,8 @@ def _redact(text) -> str:
 def _explain(status, text):
     """HTTP ত্রুটি → সহজ বাংলা কারণ ও সমাধান। ফেরত: (বার্তা, fatal, kind)"""
     t = (text or "").lower()
+    if status == 429:  # আগে এটা দেখি: Gemini-র 429 উত্তরেও "billing" শব্দ থাকে
+        return "ফ্রি কোটা বা রেট লিমিট শেষ। কিছুক্ষণ পরে বা পরদিন আবার চালান", True, "quota"
     if "credit balance" in t or "billing" in t:
         return "AI অ্যাকাউন্টে ক্রেডিট/বিলিং নেই। অ্যাকাউন্টে ক্রেডিট যোগ করুন বা Gemini (ফ্রি) ব্যবহার করুন", True, "key"
     if status in (400, 401, 403) and any(k in t for k in ("api key", "api_key", "x-api-key", "authentication",
@@ -90,7 +92,8 @@ def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries)
     return "".join(p.get("text", "") for p in parts if not p.get("thought"))
 
 
-def complete(cfg, system, user, max_tokens=4000, temperature=0.9) -> str:
+def complete(cfg, system, user, max_tokens=4000, temperature=0.9, task=None) -> str:
+    """task=\"ideas\" দিলে আইডিয়ার জন্য আলাদা Gemini মডেল (gemini_idea_model) ব্যবহার হয়।"""
     provider = cfg["llm"]["provider"]
     if provider == "anthropic":
         key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -117,6 +120,9 @@ def complete(cfg, system, user, max_tokens=4000, temperature=0.9) -> str:
         llm_cfg = cfg["llm"]
         primary = llm_cfg["gemini_model"]
         fallback = llm_cfg.get("gemini_fallback_model")
+        if task == "ideas":  # ফাঁকা থাকলে স্ক্রিপ্টের মডেলই চলবে
+            primary = llm_cfg.get("gemini_idea_model") or primary
+            fallback = llm_cfg.get("gemini_idea_fallback_model") or fallback
         try:
             return _gemini(llm_cfg, primary, key, system, user, max_tokens, temperature, retries=3)
         except LLMError as e:

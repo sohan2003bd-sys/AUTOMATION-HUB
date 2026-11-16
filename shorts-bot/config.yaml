@@ -5,8 +5,10 @@ channel:
 llm:
   provider: gemini             # anthropic | gemini
   anthropic_model: claude-haiku-5-5
-  gemini_model: gemini-3.8-flash
-  gemini_fallback_model: gemini-3.6-flash   # প্রধান মডেলে চাপ/সমস্যা হলে এটা দিয়ে চেষ্টা (ফাঁকা রাখলে বন্ধ)
+  gemini_model: gemini-3.8-flash            # স্ক্রিপ্টের জন্য (মান ভালো, ফ্রি সীমা কম)
+  gemini_fallback_model: gemini-3.5-flash-lite   # স্ক্রিপ্টের মডেলে কোটা/সমস্যা হলে এটা দিয়ে চেষ্টা (ফাঁকা রাখলে বন্ধ)
+  gemini_idea_model: gemini-3.5-flash-lite  # আইডিয়ার জন্য আলাদা মডেল (ফ্রি সীমা বেশি); ফাঁকা রাখলে স্ক্রিপ্টের মডেলই চলবে
+  gemini_idea_fallback_model: gemini-3.1-flash-lite
   gemini_thinking: low                      # low (দ্রুত) | medium | high — Gemini 3.x-এর চিন্তার স্তর
   # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
 

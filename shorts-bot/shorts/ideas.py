@@ -22,7 +22,7 @@ def generate_for_category(cfg, store, cat, count):
         f"এগুলোর মতো বা কাছাকাছি দেবে না:\n{avoid}\n\n"
         'ফরম্যাট: ["আইডিয়া ১", "আইডিয়া ২", ...]'
     )
-    raw = llm.complete(cfg, SYSTEM, user, max_tokens=4000, temperature=1.0)
+    raw = llm.complete(cfg, SYSTEM, user, max_tokens=4000, temperature=1.0, task="ideas")
     items = extract_json(raw)
     if not isinstance(items, list):
         raise ValueError("অ্যারে আশা করা হয়েছিল")
