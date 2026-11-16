@@ -23,6 +23,7 @@ class Step2(unittest.TestCase):
 
     def test_next_slots_spacing_and_rollover(self):
         cfg = config.load()
+        cfg["upload"]["slots"] = ["07:30", "09:00", "10:30", "12:00", "13:30", "15:00", "17:00", "19:00", "20:30", "22:00"]
         now = datetime(2026, 11, 16, 7, 0, tzinfo=timezone.utc)  # বাংলাদেশে ১৩:০০
         s = youtube.next_slots(cfg, 12, now, now)
         self.assertEqual(len(s), 12)
@@ -34,6 +35,19 @@ class Step2(unittest.TestCase):
         # আগের শিডিউলের পর থেকে শুরু
         later = datetime(2026, 11, 18, 0, 0, tzinfo=timezone.utc)
         self.assertGreater(youtube.next_slots(cfg, 1, later, now)[0], later)
+
+    def test_monthly_limit(self):
+        from shorts import runner
+        cfg = {"limits": {"monthly_max": 60}, "upload": {"timezone_offset_hours": 6}}
+        now = datetime(2026, 11, 16, 10, 0, tzinfo=timezone.utc)
+        ts = lambda *a: int(datetime(*a, tzinfo=timezone.utc).timestamp())
+        class S: pass
+        st = S()
+        st.rows = [{"uploaded": ts(2026, 11, 3)}] * 30 + [{"uploaded": ts(2026, 10, 20)}] * 40 + [{"status": "idea"}]
+        self.assertEqual(runner.monthly_remaining(cfg, st, now), 30)   # অক্টোবরেরগুলো গোনা হয় না
+        st.rows += [{"uploaded": ts(2026, 11, 9)}] * 30
+        self.assertEqual(runner.monthly_remaining(cfg, st, now), 0)
+        self.assertIsNone(runner.monthly_remaining({"upload": {}}, st, now))
 
     def test_token_cleanup_and_missing(self):
         with mock.patch.dict(os.environ, {"YT_CLIENT_ID": ' "abc" \n', "YT_CLIENT_SECRET": "", "YT_REFRESH_TOKEN": "1//x"}):

@@ -56,7 +56,12 @@ def _doctor(cfg) -> int:
     line(features.check("raqm"), "Pillow-তে Raqm (বাংলা যুক্তাক্ষর ঠিক রাখে)")
     prov = cfg["llm"]["provider"]
     keyname = "GEMINI_API_KEY" if prov == "gemini" else "ANTHROPIC_API_KEY"
-    line(bool(os.environ.get(keyname, "").strip()), f"{keyname} (llm.provider: {prov})")
+    if prov == "gemini":
+        from shorts import llm as _llm
+        nkeys = len(_llm.gemini_keys())
+        line(nkeys > 0, f"{keyname} (llm.provider: {prov}) — মোট {nkeys}টি Gemini কী পাওয়া গেছে")
+    else:
+        line(bool(os.environ.get(keyname, "").strip()), f"{keyname} (llm.provider: {prov})")
     if (cfg.get("research") or {}).get("enabled") and prov != "gemini":
         line(False, "research চালু কিন্তু provider gemini নয় — গবেষণা বাদ যাবে", fatal=False)
     if (cfg.get("media") or {}).get("enabled"):
@@ -154,6 +159,9 @@ def main(argv=None):
             report.error(title, str(e))
             report.summary(f"## ❌ {title}\n\n{e}")
             sys.exit(1)
+        if info.get("limit_reached"):
+            report.summary("## ✅ এই মাসের ভিডিওর সীমা পূর্ণ\n\nআগামী মাসে আবার শুরু হবে।")
+            return
         print(f"সারসংক্ষেপ: সফল {ok}, ব্যর্থ {bad}")
         _write_summary(ok, bad, stopped, info)
         if stopped or ok == 0:

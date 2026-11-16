@@ -9,13 +9,14 @@ llm:
   gemini_fallback_model: gemini-3.5-flash-lite   # স্ক্রিপ্টের মডেলে কোটা/সমস্যা হলে এটা দিয়ে চেষ্টা (ফাঁকা রাখলে বন্ধ)
   gemini_idea_model: gemini-3.5-flash-lite  # আইডিয়ার জন্য আলাদা মডেল (ফ্রি সীমা বেশি); ফাঁকা রাখলে স্ক্রিপ্টের মডেলই চলবে
   gemini_idea_fallback_model: gemini-3.1-flash-lite
-  gemini_thinking: low                      # low (দ্রুত) | medium | high — Gemini 3.x-এর চিন্তার স্তর
+  gemini_thinking: medium                      # low (দ্রুত) | medium | high — Gemini 3.x-এর চিন্তার স্তর
   # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
+  # Gemini-র ৫টি কী দিতে পারেন: GEMINI_API_KEY, GEMINI_API_KEY_2 … GEMINI_API_KEY_5 — একটার কোটা শেষ হলে পরেরটা, গোল ঘুরে
 
 # ---- গবেষণা ও ফ্যাক্ট-চেক (শুধু provider: gemini-তে; গুগল সার্চ দিয়ে তথ্য যাচাই) ----
 research:
-  enabled: true                # স্ক্রিপ্ট লেখার আগে গুগল সার্চে তথ্য জোগাড়; ভুল/পুরনো বিষয় বাতিল
-  verify: true                 # স্ক্রিপ্ট লেখার পর প্রতিটি দাবি আবার মিলিয়ে দেখা, ভুল থাকলে ঠিক করা
+  enabled: false                # স্ক্রিপ্ট লেখার আগে গুগল সার্চে তথ্য জোগাড়; ভুল/পুরনো বিষয় বাতিল
+  verify: false                 # স্ক্রিপ্ট লেখার পর প্রতিটি দাবি আবার মিলিয়ে দেখা, ভুল থাকলে ঠিক করা
   strict: false                # true হলে গবেষণা/যাচাই ব্যর্থ হলে ভিডিও বানানো বন্ধ; false হলে বাদ দিয়ে চলে
 
 # ---- আসল ফুটেজ ও ছবি (PEXELS / PIXABAY / UNSPLASH কী — যেকোনো একটা হলেই চলে; Lorem Picsum কী ছাড়াই শেষ ভরসা; কিছুই না থাকলে ডিজাইন-ব্যাকগ্রাউন্ড) ----
@@ -58,6 +59,10 @@ smartedit:
   captions: true               # Gemini দিয়ে বাংলা/ইংরেজি ক্যাপশন (provider: gemini লাগবে)
   loudnorm: true
 
+# ---- সীমা: মাসে সর্বোচ্চ এতগুলো ভিডিও আপলোড (দিনে ২টি × ৩০ = ৬০); ১০ ক্যাটাগরি ঘুরিয়ে ঘুরিয়ে, প্রতিটি থেকে ~৬টি ----
+limits:
+  monthly_max: 60              # 0 = সীমা নেই
+
 script:
   target_seconds: 30       # প্রতি ভিডিওর লক্ষ্য দৈর্ঘ্য (বাংলা ভয়েসে প্রায় ২ শব্দ/সেকেন্ড)
   min_words: 55
@@ -70,7 +75,7 @@ upload:
   language: bn
   notify_subscribers: false    # ১০টি করে আপলোডে সাবস্ক্রাইবারকে বারবার নোটিফিকেশন না পাঠাতে
   timezone_offset_hours: 6     # বাংলাদেশ = +6
-  slots: ["07:30", "09:00", "10:30", "12:00", "13:30", "15:00", "17:00", "19:00", "20:30", "22:00"]  # schedule মোডে প্রকাশের সময়
+  slots: ["13:00", "20:00"]   # schedule মোডে প্রকাশের সময় (দিনে ২টি)
 
 paths:
   data_dir: data

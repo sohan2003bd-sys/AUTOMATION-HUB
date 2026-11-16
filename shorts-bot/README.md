@@ -10,6 +10,7 @@
    - Ubuntu/GitHub Actions: `sudo apt-get install -y ffmpeg fonts-noto-core libraqm0 libfribidi0`
    - Windows/Mac: Google Fonts থেকে *Noto Sans Bengali* (Bold) নামিয়ে `assets/fonts/` ফোল্ডারে রাখুন (ফোল্ডার বানিয়ে নিন)।
 4. AI কী সেট করুন (একটা): `ANTHROPIC_API_KEY` অথবা `GEMINI_API_KEY`, আর `config.yaml`-এ `llm.provider` মিলিয়ে নিন।
+   Gemini-র একাধিক কী দিতে পারেন: `GEMINI_API_KEY`, `GEMINI_API_KEY_2`, `_3`, `_4`, `_5` — একটার কোটা শেষ হলে বট নিজে পরেরটায় যায়, শেষেরটার পর আবার প্রথমটায় ফেরে। (ভালো ফল পেতে প্রতিটি কী আলাদা গুগল অ্যাকাউন্ট/প্রজেক্ট থেকে বানান — একই প্রজেক্টের কী-গুলোর কোটা একসাথে শেষ হয়।)
    মডেলের নাম `config.yaml`-এ আছে; না চললে আপনার অ্যাকাউন্টে থাকা নামটি বসান।
    (ভয়েস শুধু Microsoft Edge-এর বিনামূল্যের বাংলা কণ্ঠে — `tts.voice`-এ নারী/পুরুষ কণ্ঠ বদলানো যায়।)
 5. `config.yaml`-এ `channel.handle` নিজের চ্যানেলের নাম দিন।
@@ -39,7 +40,7 @@ python -m shorts status
 `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`, এবং AI কী: `ANTHROPIC_API_KEY` অথবা `GEMINI_API_KEY` (config.yaml-এর `llm.provider` মিলিয়ে)।
 
 **চালানো:** repo → Actions → *shorts-daily* → Run workflow। শুরুতে `count = 1`, `privacy = private` দিয়ে পরীক্ষা করুন।
-প্রতিদিন সকাল ৮টায় (বাংলাদেশ) নিজে চলে, ১০টি ভিডিও বানায়।
+প্রতিদিন সকাল ৮টায় (বাংলাদেশ) নিজে চলে, ২টি ভিডিও বানায় (মাসে ~৬০টি; `limits.monthly_max` দিয়ে সীমা বাঁধা)।
 
 **`config.yaml` → `upload.privacy`:**
 - `private` — আপলোড হয়, শুধু আপনি দেখেন (শুরুতে নিরাপদ)।

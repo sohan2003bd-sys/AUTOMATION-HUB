@@ -48,7 +48,7 @@ def _explain(status, text):
     return "AI থেকে অপ্রত্যাশিত উত্তর", False, "other"
 
 
-def _post(url, headers, body, retries=3, timeout=60):
+def _post(url, headers, body, retries=3, timeout=60, fast429=False):
     last, status, text = None, None, ""
     for i in range(retries):
         try:
@@ -58,6 +58,8 @@ def _post(url, headers, body, retries=3, timeout=60):
             status, text = r.status_code, r.text[:300]
             last = f"HTTP {status}: {text}"
             if status not in (408, 409, 429, 500, 502, 503, 529):
+                break
+            if status == 429 and fast429:  # একাধিক কী থাকলে অপেক্ষা না করে সঙ্গে সঙ্গে পরের কী ধরি
                 break
         except requests.RequestException as e:  # নেটওয়ার্ক সমস্যা / সময় শেষ
             status, text, last = None, "", f"নেটওয়ার্ক: {e}"
@@ -87,10 +89,7 @@ def _gemini_full(llm_cfg, model, key, system, user, max_tokens, temperature, ret
     }
     if tools:
         body["tools"] = tools
-    data = _post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
-        {"content-type": "application/json"}, body, retries=retries, timeout=timeout,
-    )
+    data = _post_rotating(model, body, retries, timeout)
     try:
         cand = data["candidates"][0]
         parts = cand["content"]["parts"]
@@ -108,13 +107,69 @@ def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries)
     return _gemini_full(llm_cfg, model, key, system, user, max_tokens, temperature, retries)[0]
 
 
+# ---- একাধিক Gemini কী: একটার কোটা শেষ হলে পরেরটা, শেষেরটার পর আবার প্রথমটা (গোল ঘুরে) ----
+KEY_NAMES = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 11)]
+KEY_COOLDOWN = 90  # সেকেন্ড: কোটা-শেষ কী এতক্ষণ বাদ থাকে, তারপর আবার চেষ্টা (মিনিটের সীমা হলে ফিরে আসে)
+_KEY_STATE = {"i": 0}
+_COOLDOWN = {}  # (মডেল, কী-নম্বর) -> কখন পর্যন্ত বাদ
+
+
+def gemini_keys():
+    """সেট করা সব Gemini কী (GEMINI_API_KEY, GEMINI_API_KEY_2 … _10; কমা দিয়ে লেখা GEMINI_API_KEYS-ও চলে)।"""
+    raw = [os.environ.get(n, "") for n in KEY_NAMES]
+    raw += os.environ.get("GEMINI_API_KEYS", "").split(",")
+    keys = []
+    for k in raw:
+        k = k.strip()
+        if k and k not in keys:
+            keys.append(k)
+    return keys
+
+
 def _gemini_key():
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if not key:
-        raise LLMError("GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
-                       "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন)",
-                       fatal=True, kind="key")
-    return key
+    keys = gemini_keys()
+    if not keys:
+        raise LLMError(
+            "GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
+            "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন; "
+            "বাড়তি কী GEMINI_API_KEY_2 … GEMINI_API_KEY_5 নামে দিন)",
+            fatal=True, kind="key")
+    return keys[0]
+
+
+def _post_rotating(model, body, retries, timeout):
+    """কী ঘুরিয়ে ঘুরিয়ে অনুরোধ পাঠায়। কোটা শেষ (429) বা কী ভুল হলে পরের কী; অন্য ত্রুটি সোজা উপরে যায়।"""
+    _gemini_key()  # কোনো কী না থাকলে এখানেই পরিষ্কার ত্রুটি
+    keys = gemini_keys()
+    n = len(keys)
+    start = _KEY_STATE["i"] % n
+    last = None
+    for step in range(n):
+        idx = (start + step) % n
+        until = _COOLDOWN.get((model, idx), 0)
+        if time.time() < until:
+            continue
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={keys[idx]}"
+        try:
+            data = _post(url, {"content-type": "application/json"}, body, retries=retries,
+                         timeout=timeout, fast429=(n > 1))
+            _KEY_STATE["i"] = idx
+            return data
+        except LLMError as e:
+            if e.kind not in ("quota", "key"):
+                raise
+            last = e
+            _COOLDOWN[(model, idx)] = time.time() + KEY_COOLDOWN
+            if n > 1:
+                why = "কোটা শেষ" if e.kind == "quota" else "কী কাজ করছে না"
+                nxt = (idx + 1) % n + 1
+                print(f"  ⚠ Gemini কী নং {idx + 1}: {why} ({model}); কী নং {nxt} দিয়ে চেষ্টা করছি", file=sys.stderr)
+    if last is None:  # সব কী এখন বিশ্রামে
+        raise LLMError(f"ফ্রি কোটা বা রেট লিমিট শেষ (সব {n}টি কী-ই এই মডেলে ব্যস্ত)। কিছুক্ষণ পরে আবার চালান",
+                       fatal=True, kind="quota")
+    if n > 1:
+        last = LLMError(f"সব {n}টি Gemini কী-তেই সমস্যা: {last}", fatal=last.fatal, kind=last.kind)
+    raise last
 
 
 def _run_gemini(cfg, task, call):

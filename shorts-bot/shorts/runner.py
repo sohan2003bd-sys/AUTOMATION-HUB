@@ -42,6 +42,20 @@ def refill(cfg, store, count, budget_sec=300):
     return errors
 
 
+def monthly_remaining(cfg, store, now=None):
+    """এই মাসে (বাংলাদেশ সময়ে) আর কয়টি ভিডিও আপলোড করা যাবে। সীমা না থাকলে None।"""
+    cap = int((cfg.get("limits") or {}).get("monthly_max", 0) or 0)
+    if cap <= 0:
+        return None
+    from datetime import timedelta
+    off = timedelta(hours=cfg.get("upload", {}).get("timezone_offset_hours", 6))
+    now = now or datetime.now(timezone.utc)
+    cur = (now + off).strftime("%Y-%m")
+    used = sum(1 for r in store.rows if r.get("uploaded")
+               and (datetime.fromtimestamp(r["uploaded"], timezone.utc) + off).strftime("%Y-%m") == cur)
+    return max(0, cap - used)
+
+
 def _last_publish(store):
     best = datetime.now(timezone.utc)
     for r in store.rows:
@@ -59,6 +73,14 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
     কোনো ভিডিও বানানোর সুযোগই না থাকলে RunError ছোড়ে (যাতে রান সবুজ না হয়)।
     info দিলে (dict) তাতে "problems" ও "links" তালিকা ভরা হয়।"""
     info = info if info is not None else {}
+    if upload:
+        rem = monthly_remaining(cfg, store)
+        if rem is not None:
+            if rem <= 0:
+                print("এই মাসের সীমা (limits.monthly_max) পূর্ণ — আজ কোনো ভিডিও বানানো হবে না।")
+                info["limit_reached"] = True
+                return 0, 0, False
+            count = min(count, rem)
     problems = info.setdefault("problems", [])
     links = info.setdefault("links", [])
     out = config.out_dir(cfg)
