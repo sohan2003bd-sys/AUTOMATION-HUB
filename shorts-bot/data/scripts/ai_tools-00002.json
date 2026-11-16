@@ -1,0 +1,56 @@
+{
+  "title": "জেমিনাই দিয়ে মক ইন্টারভিউ প্রস্তুতি",
+  "description": "চাকরির ইন্টারভিউয়ের ভয় কাটাতে গুগল জেমিনাই ব্যবহার করে সহজেই মক ইন্টারভিউ দিতে পারেন। এই ভিডিওতে দেখুন সঠিক প্রম্পট ব্যবহারের সহজ পদ্ধতি।",
+  "tags": [
+    "Google Gemini",
+    "AI Tools",
+    "Job Interview",
+    "মক ইন্টারভিউ",
+    "টেক টিপস",
+    "Gemini AI",
+    "চাকরির প্রস্তুতি",
+    "Artificial Intelligence",
+    "Interview Tips",
+    "AI bangla"
+  ],
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "চাকরির ইন্টারভিউ নিয়ে কি খুব ভয় কাজ করে? গুগল জেমিনাই এবার আপনার পার্সোনাল মক ইন্টারভিউয়ার হতে পারে।",
+      "screen_text": "Gemini Mock Interview",
+      "highlight": "Mock Interview",
+      "visual_query": "person practicing interview"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রথমে জেমিনাই অ্যাপ ওপেন করুন এবং আপনার কাঙ্ক্ষিত পজিশন ও অভিজ্ঞতার কথা লিখে দিন।",
+      "screen_text": "Open Gemini App",
+      "highlight": "Gemini App",
+      "visual_query": "smartphone typing screen"
+    },
+    {
+      "kind": "step",
+      "narration": "এবার প্রম্পট দিন, তুমি একজন কঠোর এইচআর ম্যানেজার, আমাকে পর পর পাঁচটি প্রশ্ন করো।",
+      "screen_text": "Type HR Prompt",
+      "highlight": "HR Prompt",
+      "visual_query": "person typing on laptop"
+    },
+    {
+      "kind": "tip",
+      "narration": "জেমিনাই আপনার উত্তর যাচাই করে ভুলত্রুটি ও উন্নত করার সঠিক ফিডব্যাক সাথে সাথে দিয়ে দেবে।",
+      "screen_text": "Check AI Feedback",
+      "highlight": "AI Feedback",
+      "visual_query": "reading laptop screen"
+    },
+    {
+      "kind": "outro",
+      "narration": "এভাবে সহজেই এআই ব্যবহার করে ঘরে বসে ইন্টারভিউয়ের পূর্ণ প্রস্তুতি নিতে পারেন।",
+      "screen_text": "Ready For Interview",
+      "highlight": "Ready",
+      "visual_query": "confident person smiling"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
