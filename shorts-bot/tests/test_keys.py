@@ -119,5 +119,22 @@ class DailyQuota(unittest.TestCase):
         llm._COOLDOWN.clear()
 
 
+class QuotaDetail(unittest.TestCase):
+    def test_extracts_real_reason(self):
+        import json
+        body = json.dumps({"error": {"code": 429, "details": [
+            {"@type": "type.googleapis.com/google.rpc.QuotaFailure", "violations": [
+                {"quotaId": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+                 "quotaValue": "0", "quotaDimensions": {"model": "gemini-3.1-flash-lite"}}]},
+            {"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": "30s"}]}})
+        text, daily = llm._quota_detail(body)
+        self.assertTrue(daily)
+        self.assertIn("সীমা=0", text)
+        self.assertIn("gemini-3.1-flash-lite", text)
+
+    def test_bad_body_is_safe(self):
+        self.assertEqual(llm._quota_detail("not json"), ("", False))
+
+
 if __name__ == "__main__":
     unittest.main()

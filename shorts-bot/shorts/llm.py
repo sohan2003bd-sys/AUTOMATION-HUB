@@ -25,6 +25,28 @@ def _redact(text) -> str:
     return re.sub(r"(key=)[^&\s'\"]+", r"\1***", str(text))
 
 
+def _quota_detail(body):
+    """Google-এর ত্রুটির JSON থেকে কোটার আসল কারণ বের করে (কোন সীমা, কত, কোন মডেল, কতক্ষণ পরে)।
+    ফেরত: (সংক্ষিপ্ত লেখা, দৈনিক_কি)। বুঝতে না পারলে ("", False)।"""
+    try:
+        err = json.loads(body).get("error") or {}
+    except (ValueError, AttributeError, TypeError):
+        return "", False
+    bits, daily = [], False
+    for d in err.get("details") or []:
+        if not isinstance(d, dict):
+            continue
+        for v in d.get("violations") or []:
+            qid = str(v.get("quotaId") or v.get("quotaMetric") or "")
+            model = (v.get("quotaDimensions") or {}).get("model", "")
+            val = v.get("quotaValue")
+            bits.append(qid + (f" সীমা={val}" if val is not None else "") + (f" মডেল={model}" if model else ""))
+            daily = daily or "perday" in qid.lower()
+        if d.get("retryDelay"):
+            bits.append(f"আবার চেষ্টা: {d['retryDelay']} পরে")
+    return " | ".join(dict.fromkeys(bits))[:260], daily
+
+
 def _explain(status, text):
     """HTTP ত্রুটি → সহজ বাংলা কারণ ও সমাধান। ফেরত: (বার্তা, fatal, kind)"""
     t = (text or "").lower()
@@ -57,9 +79,12 @@ def _post(url, headers, body, retries=3, timeout=60, fast429=False):
             if r.status_code == 200:
                 return r.json()
             status, text = r.status_code, r.text[:300]
-            daily = status == 429 and "perday" in r.text.lower().replace(" ", "")
+            detail, d2 = _quota_detail(r.text) if status == 429 else ("", False)
+            daily = status == 429 and (d2 or "perday" in r.text.lower().replace(" ", ""))
+            if detail:  # লম্বা JSON-এর বদলে আসল কারণটুকু
+                last = f"HTTP {status}: {detail}"
             if daily:  # দৈনিক কোটা: অপেক্ষা বা রিট্রাই করে লাভ নেই
-                last = f"HTTP {status}: {text}"
+                last = f"HTTP {status}: {detail or text}"
                 break
             last = f"HTTP {status}: {text}"
             if status not in (408, 409, 429, 500, 502, 503, 529):
@@ -169,7 +194,9 @@ def _post_rotating(model, body, retries, timeout):
             if n > 1:
                 why = "কোটা শেষ" if e.kind == "quota" else "কী কাজ করছে না"
                 nxt = (idx + 1) % n + 1
-                print(f"  ⚠ Gemini কী নং {idx + 1}: {why} ({model}); কী নং {nxt} দিয়ে চেষ্টা করছি", file=sys.stderr)
+                reason = str(e).split("[", 1)[-1].rstrip("]")[:200] if "[" in str(e) else ""
+                print(f"  ⚠ Gemini কী নং {idx + 1}: {why} ({model}); কী নং {nxt} দিয়ে চেষ্টা করছি"
+                      + (f"\n     কারণ: {reason}" if reason else ""), file=sys.stderr)
     if last is None:  # সব কী এখন বিশ্রামে
         raise LLMError(f"ফ্রি কোটা বা রেট লিমিট শেষ (সব {n}টি কী-ই এই মডেলে ব্যস্ত)। কিছুক্ষণ পরে আবার চালান",
                        fatal=True, kind="quota")
