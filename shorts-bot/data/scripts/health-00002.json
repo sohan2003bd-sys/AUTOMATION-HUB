@@ -1,0 +1,63 @@
+{
+  "title": "বায়ু দূষণে হাঁপানি ও শ্বাসকষ্টের সতর্কতা",
+  "description": "বায়ু দূষণের মাত্রা বাড়লে হাঁপানি ও শ্বাসকষ্টের রোগীদের জন্য ঘরের বাইরে মাস্ক ব্যবহার কেন জরুরি, তা জেনে নিন। সচেতন থাকুন, সুস্থ থাকুন।",
+  "tags": [
+    "বায়ু দূষণ",
+    "হাঁপানি",
+    "শ্বাসকষ্ট",
+    "স্বাস্থ্য সতর্কতা",
+    "mask",
+    "air pollution",
+    "asthma",
+    "health tips bangla",
+    "medical awareness"
+  ],
+  "tone": "urgent",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "বাইরে বেরোলেই দম আটকে আসছে? কিন্তু আসল কথা হলো, এই ধুলোবালি হাঁপানি রোগীদের জন্য মারাত্মক।",
+      "screen_text": "বাইরে বেরোলেই দম আটকে আসছে? কিন্তু আসল",
+      "highlight": "",
+      "visual_query": "dusty hazy city skyline"
+    },
+    {
+      "kind": "step",
+      "narration": "শহরের বাতাসে দূষণের মাত্রা এখন বিপজ্জনক সীমায় পৌঁছে গেছে।",
+      "screen_text": "শহরের বাতাসে দূষণের মাত্রা এখন বিপজ্জনক সীমায়",
+      "highlight": "",
+      "visual_query": "empty road heavy smog"
+    },
+    {
+      "kind": "step",
+      "narration": "সূক্ষ্ম ধূলিকণা খুব সহজেই নিঃশ্বাসের সঙ্গে ফুসফুসে ঢুকে প্রদাহ তৈরি করে।",
+      "screen_text": "সূক্ষ্ম ধূলিকণা খুব সহজেই নিঃশ্বাসের সঙ্গে ফুসফুসে",
+      "highlight": "",
+      "visual_query": "dry tree leaves dust"
+    },
+    {
+      "kind": "tip",
+      "narration": "তাই ঘর থেকে বের হওয়ার সময় অবশ্যই ভালো মানের মাস্ক ব্যবহার করুন।",
+      "screen_text": "তাই ঘর থেকে বের হওয়ার সময় অবশ্যই",
+      "highlight": "",
+      "visual_query": "white medical mask table"
+    },
+    {
+      "kind": "tip",
+      "narration": "বিশেষ করে যাদের অ্যাজমা বা শ্বাসকষ্টের সমস্যা আছে, তাদের অতিরিক্ত সতর্কতা দরকার।",
+      "screen_text": "বিশেষ করে যাদের অ্যাজমা বা শ্বাসকষ্টের সমস্যা",
+      "highlight": "",
+      "visual_query": "inhaler medicine wooden desk"
+    },
+    {
+      "kind": "outro",
+      "narration": "প্রয়োজনে চিকিৎসকের পরামর্শ নিন এবং দূষিত বাতাসে বাইরে যাওয়া কমিয়ে দিন।",
+      "screen_text": "প্রয়োজনে চিকিৎসকের পরামর্শ নিন এবং দূষিত বাতাসে",
+      "highlight": "",
+      "visual_query": "closed wooden window glass"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
