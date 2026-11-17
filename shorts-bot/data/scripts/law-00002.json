@@ -1,0 +1,63 @@
+{
+  "title": "ঘরে বসেই এনআইডি সংশোধনের নিয়ম",
+  "description": "জাতীয় পরিচয়পত্র বা এনআইডি কার্ডের ভুল তথ্য অনলাইনে সংশোধনের নতুন নিয়ম ও প্রয়োজনীয় কাগজপত্রের সঠিক তথ্য জেনে নিন।",
+  "tags": [
+    "NID correction",
+    "এনআইডি সংশোধন",
+    "আইনি অধিকার",
+    "Smart NID",
+    "বাংলাদেশ নির্বাচন কমিশন",
+    "আইন ও অধিকার",
+    "online services",
+    "NID card bangladesh",
+    "সচেতনতা"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "এনআইডি কার্ডের ভুল তথ্য ঠিক করতে কি এখনো দালালের পেছনে ছুটছেন?",
+      "screen_text": "এনআইডি কার্ডের ভুল তথ্য ঠিক করতে কি",
+      "highlight": "",
+      "visual_query": "red warning sign on desk"
+    },
+    {
+      "kind": "step",
+      "narration": "নির্বাচন কমিশনের সেবা পোর্টাল বা অ্যাপে এখন ঘরে বসেই আবেদন করা যায়।",
+      "screen_text": "নির্বাচন কমিশনের সেবা পোর্টাল বা অ্যাপে এখন",
+      "highlight": "",
+      "visual_query": "smartphone screen glowing dark"
+    },
+    {
+      "kind": "step",
+      "narration": "নাম বা বয়সের জন্য জন্মসনদ এবং শিক্ষাগত যোগ্যতার সনদ বাধ্যতামূলক।",
+      "screen_text": "নাম বা বয়সের জন্য জন্মসনদ এবং শিক্ষাগত",
+      "highlight": "",
+      "visual_query": "official documents stack on wooden table"
+    },
+    {
+      "kind": "step",
+      "narration": "ভুল সংশোধন না করলে ব্যাংকিং বা জমি কেনাবেচায় বড় আইনি জটিলতা হতে পারে।",
+      "screen_text": "ভুল সংশোধন না করলে ব্যাংকিং বা জমি",
+      "highlight": "",
+      "visual_query": "closed office door hallway"
+    },
+    {
+      "kind": "tip",
+      "narration": "আবেদনের আগে প্রয়োজনীয় সব কাগজ স্ক্যান করে প্রস্তুত রাখুন।",
+      "screen_text": "আবেদনের আগে প্রয়োজনীয় সব কাগজ স্ক্যান করে",
+      "highlight": "",
+      "visual_query": "laptop keyboard close up"
+    },
+    {
+      "kind": "outro",
+      "narration": "সঠিক কাগজপত্রে নিজে আবেদন করুন, দালাল মুক্ত থাকুন।",
+      "screen_text": "সঠিক কাগজপত্রে নিজে আবেদন করুন, দালাল মুক্ত",
+      "highlight": "",
+      "visual_query": "empty city street sunset"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
