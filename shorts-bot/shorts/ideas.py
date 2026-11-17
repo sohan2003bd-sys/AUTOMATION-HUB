@@ -73,21 +73,34 @@ def _from_news(cfg, store, cat, count):
     heads = news.fetch(cfg, q, 15)
     if len(heads) < 3:
         return []
-    block = "\n".join(f"- {h['title']} ({h['source']}, {h['date']})" for h in heads)
+    block = "\n".join(f"[{i}] {h['title']} ({h['source']}, {h['date']})" for i, h in enumerate(heads, 1))
     user = (
         f"আজকের তারিখ: {today(cfg)}।\nক্যাটাগরি: {cat['name']}\nপরিধি: {cat['hint']}\n\n"
         f"নিচে আজকের আসল সংবাদ-শিরোনাম:\n{block}\n\n"
         f"এই শিরোনামগুলো থেকে দর্শকের জন্য সবচেয়ে কাজের, একে অন্যের থেকে আলাদা ঠিক {count}টি ভিডিও-আইডিয়া বানাও। "
-        "প্রতিটি একটা বাক্যে, বাংলায়, শিরোনামের আসল ঘটনা/নাম সহ—শিরোনামে নেই এমন কোনো তথ্য নিজে থেকে যোগ করবে না। "
+        "প্রতিটি আইডিয়া একটা বাক্যে, বাংলায়, শিরোনামের আসল ঘটনা/নাম সহ—শিরোনামে নেই এমন কোনো তথ্য নিজে থেকে যোগ করবে না। "
+        "প্রতিটির সঙ্গে যে শিরোনাম-নম্বরগুলো থেকে নিয়েছ সেগুলো (১–৩টি) দাও। "
         "দলীয় রাজনীতির পক্ষ-বিপক্ষ, সহিংসতা বা গুজব বাদ দেবে।\n\n"
         f"এগুলোর মতো বা কাছাকাছি দেবে না:\n{_avoid(store, cat)}\n\n"
-        'ফরম্যাট: ["আইডিয়া ১", "আইডিয়া ২", ...]'
+        'ফরম্যাট: [{"idea": "আইডিয়া ১", "src": [1, 4]}, {"idea": "আইডিয়া ২", "src": [2]}]'
     )
     try:
         items = extract_json(llm.complete(cfg, SYSTEM, user, max_tokens=4000, temperature=1.0, task="ideas"))
     except ValueError:
         return []
-    return [i for i in items if isinstance(i, str)] if isinstance(items, list) else []
+    if not isinstance(items, list):
+        return []
+    out = []
+    for it in items:
+        if isinstance(it, str):  # পুরনো ধাঁচের উত্তর: শুধু লেখা
+            out.append(it)
+        elif isinstance(it, dict) and isinstance(it.get("idea"), str):
+            idx = [i for i in (it.get("src") or []) if isinstance(i, int) and 1 <= i <= len(heads)][:3]
+            hs = [heads[i - 1] for i in idx]
+            out.append({"topic": it["idea"],
+                        "facts": [f"{h['title']} (সূত্র: {h['source'] or 'সংবাদমাধ্যম'}, {h['date']})" for h in hs],
+                        "sources": list(dict.fromkeys(h["source"] for h in hs if h["source"]))})
+    return out
 
 
 def generate_for_category(cfg, store, cat, count):

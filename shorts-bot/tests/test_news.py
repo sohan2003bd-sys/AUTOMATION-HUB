@@ -102,5 +102,72 @@ class Variety(unittest.TestCase):
             self.assertEqual(st.add_topics("world", ["ডলারের দাম এক দিনে তিন টাকা বেড়েছে কী করবেন"]), 0)
 
 
+class Stored(unittest.TestCase):
+    def test_ideas_keep_their_source_headlines(self):
+        cfg = _cfg()
+        cfg["ideas"]["trending"] = True
+        cat = config.category(cfg, "money")
+        heads = news.parse(RSS) + [{"title": "আরেকটা বড় শিরোনাম এখানে", "source": "ঢাকা ট্রিবিউন", "date": "16 Nov"}]
+        reply = '[{"idea": "ডলারের নতুন দাম কী বলছে", "src": [1, 3]}, {"idea": "ব্যাংকের সুদের হার বদলের মানে", "src": [2]}]'
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(Path(d) / "q.jsonl")
+            with mock.patch.object(news, "fetch", return_value=heads), mock.patch.object(llm, "complete", return_value=reply):
+                n = ideas.generate_for_category(cfg, st, cat, 2)
+            self.assertEqual(n, 2)
+            r = st.rows[0]
+            self.assertEqual(len(r["facts"]), 2)
+            self.assertIn("প্রথম আলো", r["facts"][0])
+            self.assertIn("ঢাকা ট্রিবিউন", r["sources"])
+
+    def test_pipeline_uses_stored_facts_without_new_requests(self):
+        from shorts import pipeline
+        cfg = _cfg()
+        cfg["llm"]["grounding"] = False
+        cfg["research"] = {"enabled": True, "verify": False, "strict": False}
+        cat = config.category(cfg, "money")
+        rec = {"id": "money-00001", "category": "money", "topic": "ডলারের নতুন দাম", "status": "idea",
+               "facts": ["ডলারের দাম বাড়ল (সূত্র: প্রথম আলো, 16 Nov)"], "sources": ["প্রথম আলো"]}
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(Path(d) / "q.jsonl")
+            st.rows.append(rec)
+            seen = {}
+
+            def gen(cfg, cat, rec, facts=None, variant=None):
+                seen["facts"] = facts
+                return {"title": "শিরোনাম", "scenes": []}
+            with mock.patch.object(research, "gather", side_effect=AssertionError("গবেষণা ডাকা উচিত নয়")), \
+                    mock.patch.object(scriptgen, "generate", gen), \
+                    mock.patch.object(research, "verify", side_effect=lambda c, sc, f: (sc, [])):
+                sp = Path(d) / "s.json"
+                pipeline.make_script(cfg, st, cat, rec, sp)
+        self.assertEqual(seen["facts"], rec["facts"])
+
+
+class Retry(unittest.TestCase):
+    def setUp(self):
+        news._CACHE.clear()
+
+    def test_429_then_success_and_cache(self):
+        cfg = _cfg()
+        bad, ok = mock.Mock(status_code=429, text=""), mock.Mock(status_code=200, text=RSS)
+        with mock.patch("requests.get", side_effect=[bad, ok]) as g, mock.patch("time.sleep") as sl:
+            r = news.fetch(cfg, "ডলার", 5)
+            self.assertEqual(len(r), 2)
+            self.assertEqual(g.call_count, 2)
+            sl.assert_called_once()
+            news.fetch(cfg, "ডলার", 5)                    # ক্যাশ: আর কোনো অনুরোধ নয়
+            self.assertEqual(g.call_count, 2)
+
+    def test_falls_back_to_bing_when_google_keeps_429(self):
+        cfg = _cfg()
+        bad = mock.Mock(status_code=429, text="")
+        bing = mock.Mock(status_code=200, text=RSS.replace("<source>", "<News:Source>").replace("</source>", "</News:Source>")
+                         .replace("<rss>", '<rss xmlns:News="https://www.bing.com/news">'))
+        with mock.patch("requests.get", side_effect=[bad, bad, bad, bing]), mock.patch("time.sleep"):
+            r = news.fetch(cfg, "ডলার", 5)
+        self.assertEqual(len(r), 2)
+        self.assertEqual(r[0]["source"], "প্রথম আলো")
+
+
 if __name__ == "__main__":
     unittest.main()

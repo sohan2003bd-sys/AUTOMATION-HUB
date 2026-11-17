@@ -50,13 +50,17 @@ class Store:
     def add_topics(self, category, topics):
         added = 0
         for t in topics:
+            extra = {}
+            if isinstance(t, dict):  # {"topic":..., "facts":[...], "sources":[...]} — আইডিয়ার সঙ্গে আসা সংবাদ-তথ্য
+                extra = {k: t[k] for k in ("facts", "sources") if t.get(k)}
+                t = t.get("topic", "")
             t = str(t).strip()
             if not t or self.is_dup(category, t):
                 continue
             nums = [int(r["id"].rsplit("-", 1)[1]) for r in self.rows if r["category"] == category]
             rid = f"{category}-{(max(nums) + 1 if nums else 1):05d}"
             self.rows.append({"id": rid, "category": category, "topic": t, "status": "idea",
-                              "created": int(time.time())})
+                              "created": int(time.time()), **extra})
             added += 1
         self.save()
         return added

@@ -61,7 +61,14 @@ def finish(cfg, cat, script, vid_id, engine=None, voice_index=None):
 
 def make_script(cfg, store, cat, rec, spath):
     """গবেষণা → স্ক্রিপ্ট → ফ্যাক্ট-চেক। বাতিল হলে Rejected।"""
-    info = research.gather(cfg, cat, rec["topic"])
+    stored = rec.get("facts") or []  # আইডিয়া বানানোর সময়ই পাওয়া সংবাদ-তথ্য (আলাদা নেটওয়ার্ক-অনুরোধ লাগে না)
+    own = {"facts": stored, "sources": rec.get("sources") or [], "rejected": None, "ok": True}
+    if stored and not cfg["llm"].get("grounding", True):
+        info = own
+    else:
+        info = research.gather(cfg, cat, rec["topic"])
+        if stored and not info["facts"] and not info["rejected"]:
+            info = own
     if info["rejected"]:
         store.update(rec["id"], status="rejected", error=("ফ্যাক্ট-চেক: " + info["rejected"])[:300])
         raise Rejected(f"বিষয় বাতিল (যাচাইয়ে টেকেনি): {info['rejected']}")

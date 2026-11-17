@@ -5,6 +5,7 @@ Gemini-র গুগল-সার্চ (গ্রাউন্ডিং) না 
 নেটওয়ার্ক/পার্সে সমস্যা হলে চুপচাপ খালি তালিকা ফেরত দেয় (ভিডিও বানানো আটকায় না)।"""
 import re
 import sys
+import time
 from urllib.parse import quote
 from xml.etree import ElementTree as ET
 
@@ -36,7 +37,7 @@ def parse(xml_text, limit=12):
     out, seen = [], set()
     for it in root.iter("item"):
         title = (it.findtext("title") or "").strip()
-        se = it.find("source")
+        se = next((c for c in it if c.tag.split("}")[-1].lower() == "source"), None)  # Google: <source>, Bing: <News:Source>
         source = (se.text or "").strip() if se is not None else ""
         if source and title.endswith(" - " + source):
             title = title[: -(len(source) + 3)].strip()
@@ -52,16 +53,47 @@ def parse(xml_text, limit=12):
     return out
 
 
+_CACHE = {}
+
+
+def _bing_url(cfg, query):
+    return f"https://www.bing.com/news/search?q={quote(query or 'বাংলাদেশ আজকের খবর')}&format=RSS&setlang=bn&cc=BD"
+
+
+def _get(url):
+    """HTTP 429 (অতিরিক্ত অনুরোধ) পেলে একটু থেমে আবার; অন্য ত্রুটিতে None।"""
+    for i, wait in enumerate((0, 6, 15)):
+        if wait:
+            time.sleep(wait)
+        try:
+            r = requests.get(url, headers=UA, timeout=15)
+        except requests.RequestException as e:
+            print(f"  ⚠ সংবাদ-শিরোনাম পাওয়া যায়নি ({e})", file=sys.stderr)
+            return None
+        if r.status_code == 200:
+            return r.text
+        if r.status_code == 429 and i < 2:
+            continue
+        print(f"  ⚠ সংবাদ-শিরোনাম পাওয়া যায়নি (HTTP {r.status_code})", file=sys.stderr)
+        return None
+    return None
+
+
 def fetch(cfg, query="", limit=12):
-    try:
-        r = requests.get(_url(cfg, query), headers=UA, timeout=15)
-        if r.status_code != 200:
-            print(f"  ⚠ সংবাদ-শিরোনাম পাওয়া যায়নি (HTTP {r.status_code})", file=sys.stderr)
-            return []
-        return parse(r.text, limit)
-    except requests.RequestException as e:
-        print(f"  ⚠ সংবাদ-শিরোনাম পাওয়া যায়নি ({e})", file=sys.stderr)
-        return []
+    key = (query, limit)
+    if key in _CACHE:
+        return _CACHE[key]
+    out = []
+    txt = _get(_url(cfg, query))
+    if txt:
+        out = parse(txt, limit)
+    if not out and (cfg.get("news") or {}).get("bing_fallback", True):  # গুগলে না পেলে Bing News RSS
+        txt = _get(_bing_url(cfg, query))
+        if txt:
+            out = parse(txt, limit)
+    if out:
+        _CACHE[key] = out
+    return out
 
 
 def facts_for(cfg, topic):
