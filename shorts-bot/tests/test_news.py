@@ -169,5 +169,34 @@ class Retry(unittest.TestCase):
         self.assertEqual(r[0]["source"], "প্রথম আলো")
 
 
+class Unsourced(unittest.TestCase):
+    def test_old_unsourced_news_ideas_expire_but_evergreen_and_sourced_stay(self):
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(Path(d) / "q.jsonl")
+            st.rows += [
+                {"id": "trending-1", "category": "trending", "topic": "পুরনো", "status": "idea"},
+                {"id": "trending-2", "category": "trending", "topic": "নতুন", "status": "idea", "facts": ["x"]},
+                {"id": "health-1", "category": "health", "topic": "স্বাস্থ্য", "status": "idea"},
+                {"id": "trending-3", "category": "trending", "topic": "লেখা আছে", "status": "scripted"},
+            ]
+            n = st.expire_unsourced({"health"})
+            st = Store(Path(d) / "q.jsonl")
+        self.assertEqual(n, 1)
+        self.assertEqual([r["status"] for r in st.rows], ["expired", "idea", "idea", "scripted"])
+
+    def test_missing_src_matched_by_words_and_unmatched_news_idea_dropped(self):
+        cfg = _cfg()
+        cat = config.category(cfg, "money")
+        heads = news.parse(RSS) + [{"title": "আরেকটা বড় শিরোনাম এখানে", "source": "s", "date": ""}]
+        reply = ('[{"idea": "ডলারের দাম বাড়ল ৩ টাকা, কী করবেন", "src": ["শিরোনাম ১"]}, '
+                 '{"idea": "একদম অপ্রাসঙ্গিক কিছু কথা এখানে", "src": []}]')
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(Path(d) / "q.jsonl")
+            with mock.patch.object(news, "fetch", return_value=heads), mock.patch.object(llm, "complete", return_value=reply):
+                items = ideas._from_news(cfg, st, cat, 2)
+        self.assertEqual(len(items), 1)                       # সূত্রহীনটি বাদ
+        self.assertTrue(items[0]["facts"])
+
+
 if __name__ == "__main__":
     unittest.main()

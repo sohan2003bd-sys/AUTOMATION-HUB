@@ -12,6 +12,7 @@ from shorts.store import Store
 
 def _setup(d, ideas=()):
     cfg = config.load()
+    cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
     cfg["paths"] = {"data_dir": os.path.join(d, "data"), "out_dir": os.path.join(d, "out")}
     cfg["_root"] = d
     store = Store(os.path.join(d, "data", "queue.jsonl"))
@@ -23,6 +24,7 @@ def _setup(d, ideas=()):
 class Failures(unittest.TestCase):
     def test_missing_key_is_fatal_with_fix_hint(self):
         cfg = config.load()
+        cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
         with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "  ", "ANTHROPIC_API_KEY": ""}):
             for prov, name in (("gemini", "GEMINI_API_KEY"), ("anthropic", "ANTHROPIC_API_KEY")):
                 cfg["llm"]["provider"] = prov

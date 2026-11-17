@@ -1,4 +1,5 @@
 """প্রতিটি ক্যাটাগরির জন্য ভিডিও-আইডিয়া বানায়: আজকের ভাইরাল ও মানুষের জানা-দরকার বিষয় (গুগল সার্চ দিয়ে খুঁজে)।"""
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -65,6 +66,14 @@ def _plain(cfg, store, cat, count):
     return [i for i in items if isinstance(i, str)]
 
 
+def _match_headlines(idea, heads, k=2):
+    """মডেল নম্বর না দিলে শব্দ-মিলে সবচেয়ে কাছের শিরোনাম বাছে (কমপক্ষে ২টি শব্দ মিলতে হবে)।"""
+    iw = {w for w in re.findall(r"\w+", idea) if len(w) >= 3}
+    scored = sorted(((len(iw & {w for w in re.findall(r"\w+", h["title"]) if len(w) >= 3}), i)
+                     for i, h in enumerate(heads)), reverse=True)
+    return [heads[i] for s, i in scored[:k] if s >= 2]
+
+
 def _from_news(cfg, store, cat, count):
     """আজকের আসল শিরোনাম (Google News RSS) দেখে আইডিয়া — গুগল-সার্চ ছাড়াই টাটকা ও সত্যিকার বিষয়।"""
     if not news.enabled(cfg):
@@ -95,8 +104,14 @@ def _from_news(cfg, store, cat, count):
         if isinstance(it, str):  # পুরনো ধাঁচের উত্তর: শুধু লেখা
             out.append(it)
         elif isinstance(it, dict) and isinstance(it.get("idea"), str):
-            idx = [i for i in (it.get("src") or []) if isinstance(i, int) and 1 <= i <= len(heads)][:3]
-            hs = [heads[i - 1] for i in idx]
+            idx = []
+            for x in it.get("src") or []:
+                m = re.search(r"\d+", str(x))
+                if m and 1 <= int(m.group()) <= len(heads):
+                    idx.append(int(m.group()))
+            hs = [heads[i - 1] for i in dict.fromkeys(idx)][:3] or _match_headlines(it["idea"], heads)
+            if not hs and not cat.get("evergreen", True):
+                continue  # সূত্র ছাড়া খবরভিত্তিক আইডিয়া রাখলে পরে বাতিল হবে
             out.append({"topic": it["idea"],
                         "facts": [f"{h['title']} (সূত্র: {h['source'] or 'সংবাদমাধ্যম'}, {h['date']})" for h in hs],
                         "sources": list(dict.fromkeys(h["source"] for h in hs if h["source"]))})

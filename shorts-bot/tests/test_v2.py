@@ -316,6 +316,7 @@ class SmartEdit(unittest.TestCase):
 
     def test_no_gemini_means_no_captions_but_no_crash(self):
         cfg = config.load()
+        cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
         cfg["llm"]["provider"] = "anthropic"
         self.assertEqual(smartedit.transcribe(cfg, "x.wav", 5.0, tempfile.gettempdir()), [])
 
@@ -324,6 +325,7 @@ class RejectedTopics(unittest.TestCase):
     def test_runner_replaces_rejected_topic(self):
         with tempfile.TemporaryDirectory() as d:
             cfg = config.load()
+            cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
             cfg["paths"] = {"data_dir": os.path.join(d, "data"), "out_dir": os.path.join(d, "out")}
             cfg["_root"] = d
             store = Store(os.path.join(d, "data", "queue.jsonl"))

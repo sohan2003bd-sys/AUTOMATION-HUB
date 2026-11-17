@@ -136,6 +136,12 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
                         int(ic.get("max_age_days", 0) or 0))
     if gone:
         print(f"পুরনো/বাদ-পড়া ক্যাটাগরির {gone}টি আইডিয়া সরানো হয়েছে")
+    if cfg["llm"]["provider"] == "gemini" and not cfg["llm"].get("grounding", True) \
+            and (cfg.get("research") or {}).get("enabled"):
+        ever = {c["id"] for c in cfg["categories"] if c.get("evergreen", True)}
+        old = store.expire_unsourced(ever)
+        if old:
+            print(f"সূত্র-ছাড়া {old}টি খবরভিত্তিক পুরনো আইডিয়া বাদ দেওয়া হলো (নতুনগুলো সূত্রসহ আসবে)")
     refill_errors = refill(cfg, store, count)
     todo = store.pending("scripted", count)
     if len(todo) < count:

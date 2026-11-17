@@ -83,6 +83,17 @@ class Store:
             self.save()
         return n
 
+    def expire_unsourced(self, evergreen_ids):
+        """সূত্র-ছাড়া (পুরনো ধাঁচে বানানো) খবরভিত্তিক আইডিয়া বাদ — সেগুলো ভিডিও বানাতে গিয়ে বাতিল হতো।"""
+        n = 0
+        for r in self.rows:
+            if r["status"] == "idea" and r["category"] not in evergreen_ids and not r.get("facts"):
+                r["status"] = "expired"
+                n += 1
+        if n:
+            self.save()
+        return n
+
     def get(self, rid):
         for r in self.rows:
             if r["id"] == rid:

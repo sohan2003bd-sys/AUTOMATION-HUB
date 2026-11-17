@@ -23,6 +23,7 @@ class Step2(unittest.TestCase):
 
     def test_next_slots_spacing_and_rollover(self):
         cfg = config.load()
+        cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
         cfg["upload"]["slots"] = ["07:30", "09:00", "10:30", "12:00", "13:30", "15:00", "17:00", "19:00", "20:30", "22:00"]
         now = datetime(2026, 11, 16, 7, 0, tzinfo=timezone.utc)  # বাংলাদেশে ১৩:০০
         s = youtube.next_slots(cfg, 12, now, now)
@@ -67,6 +68,7 @@ class Step2(unittest.TestCase):
 
     def _setup(self, d, n=3):
         cfg = config.load()
+        cfg["llm"]["grounding"] = True  # এই পরীক্ষা সূত্র-নীতি নিয়ে নয়
         cfg["paths"] = {"data_dir": os.path.join(d, "data"), "out_dir": os.path.join(d, "out")}
         cfg["_root"] = d
         store = Store(os.path.join(d, "data", "queue.jsonl"))
