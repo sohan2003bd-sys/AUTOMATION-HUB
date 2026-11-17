@@ -1,0 +1,64 @@
+{
+  "title": "শীতে কেন ত্বকে টান ধরে? জানুন বিজ্ঞানের সহজ নিয়ম",
+  "description": "শীতকালে বাতাসে আর্দ্রতা কমে যাওয়ায় ত্বকে টান ধরে। কোষের আর্দ্রতা ধরে রাখতে বিজ্ঞানের কিছু সহজ ও কার্যকর নিয়ম জেনে নিন এই ভিডিওতে।",
+  "tags": [
+    "শীতের ত্বক",
+    "ত্বকের যত্ন",
+    "skincare winter",
+    "skin hydration",
+    "বিজ্ঞান",
+    "science facts bangla",
+    "skin care tips",
+    "শীতকাল",
+    "bangla shorts",
+    "health tips bangla"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "শীতের বাতাসে আর্দ্রতা কমে গেলেই ত্বক থেকে পানি দ্রুত উবে যায়।",
+      "screen_text": "শীতের বাতাসে আর্দ্রতা কমে গেলেই ত্বক থেকে",
+      "highlight": "",
+      "visual_query": "dry cracked soil texture"
+    },
+    {
+      "kind": "step",
+      "narration": "আগে আবহাওয়া ছিল আর্দ্র, তাই ত্বক প্রাকৃতিকভাবেই নরম থাকত।",
+      "screen_text": "আগে আবহাওয়া ছিল আর্দ্র, তাই ত্বক প্রাকৃতিকভাবেই",
+      "highlight": "",
+      "visual_query": "green wet leaves morning"
+    },
+    {
+      "kind": "step",
+      "narration": "এখন বাতাসে জলীয় বাষ্প কম, তাই ত্বকের কোষগুলো শুষ্ক হয়ে পড়ে।",
+      "screen_text": "এখন বাতাসে জলীয় বাষ্প কম, তাই ত্বকের",
+      "highlight": "",
+      "visual_query": "cold winter morning fog"
+    },
+    {
+      "kind": "tip",
+      "narration": "গোসলের পর পানি মোছার আগেই হালকা ভেজা ত্বকে ময়েশ্চারাইজার লাগান।",
+      "screen_text": "গোসলের পর পানি মোছার আগেই হালকা ভেজা",
+      "highlight": "",
+      "visual_query": "white lotion bottle wooden table"
+    },
+    {
+      "kind": "tip",
+      "narration": "খুব গরম পানি দিয়ে গোসল করলে ত্বকের প্রাকৃতিক তেল নষ্ট হয়।",
+      "screen_text": "খুব গরম পানি দিয়ে গোসল করলে ত্বকের",
+      "highlight": "",
+      "visual_query": "steam rising from cup"
+    },
+    {
+      "kind": "outro",
+      "narration": "সঠিক সময়ে ময়েশ্চারাইজার ব্যবহার করলেই ত্বকের কোষ আর্দ্র থাকে।",
+      "screen_text": "সঠিক সময়ে ময়েশ্চারাইজার ব্যবহার করলেই ত্বকের কোষ",
+      "highlight": "",
+      "visual_query": "glass of pure water"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
