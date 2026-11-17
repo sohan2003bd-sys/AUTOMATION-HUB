@@ -1,0 +1,64 @@
+{
+  "title": "মহাবিশ্বের শুরু নিয়ে বিজ্ঞানীদের ধারণায় বদল",
+  "description": "জেমস ওয়েব টেলিস্কোপের নতুন তথ্যে মহাবিশ্বের শুরুর গ্যালাক্সি নিয়ে অবাক করা তথ্য সামনে এসেছে। জেনে নিন বিজ্ঞানীদের ধারণায় কী পরিবর্তন এসেছে।",
+  "tags": [
+    "জেমস ওয়েব টেলিস্কোপ",
+    "মহাবিশ্ব",
+    "বিজ্ঞান",
+    "গ্যালাক্সি",
+    "মহাকাশ",
+    "James Webb Space Telescope",
+    "Universe",
+    "Science",
+    "Galaxy",
+    "Space"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "অনেকে ভাবেন বিগ ব্যাংয়ের পর মহাবিশ্ব তৈরি হতে কোটি কোটি বছর লেগেছিল।",
+      "screen_text": "অনেকে ভাবেন বিগ ব্যাংয়ের পর মহাবিশ্ব তৈরি",
+      "highlight": "",
+      "visual_query": "dark starry night sky"
+    },
+    {
+      "kind": "step",
+      "narration": "কিন্তু জেমস ওয়েব টেলিস্কোপের নতুন তথ্য বলছে একেবারে অন্য কথা।",
+      "screen_text": "কিন্তু জেমস ওয়েব টেলিস্কোপের নতুন তথ্য বলছে",
+      "highlight": "",
+      "visual_query": "modern scientific laboratory"
+    },
+    {
+      "kind": "step",
+      "narration": "বিজ্ঞানীরা দেখছেন, মহাবিশ্বের শুরুর দিকেই বেশ বড় ও উজ্জ্বল গ্যালাক্সি তৈরি হয়েছিল।",
+      "screen_text": "বিজ্ঞানীরা দেখছেন, মহাবিশ্বের শুরুর দিকেই বেশ বড়",
+      "highlight": "",
+      "visual_query": "astronomer looking through telescope"
+    },
+    {
+      "kind": "step",
+      "narration": "আগের মডেলগুলোতে যা অসম্ভব মনে করা হতো, এটি এখন নতুন প্রশ্নের জন্ম দিয়েছে।",
+      "screen_text": "আগের মডেলগুলোতে যা অসম্ভব মনে করা হতো,",
+      "highlight": "",
+      "visual_query": "person writing notes"
+    },
+    {
+      "kind": "tip",
+      "narration": "মহাকাশ বিজ্ঞান নিয়ে জানতে নির্ভরযোগ্য নাসা বা ইসার অফিসিয়াল ওয়েবসাইট ভিজিট করুন।",
+      "screen_text": "মহাকাশ বিজ্ঞান নিয়ে জানতে নির্ভরযোগ্য নাসা বা",
+      "highlight": "",
+      "visual_query": "person using laptop"
+    },
+    {
+      "kind": "outro",
+      "narration": "নতুন তথ্যের আলোuaয় মহাবিশ্বের ইতিহাস নতুন করে লেখা হচ্ছে।",
+      "screen_text": "নতুন তথ্যের আলোuaয় মহাবিশ্বের ইতিহাস নতুন করে",
+      "highlight": "",
+      "visual_query": "library filled with books"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
