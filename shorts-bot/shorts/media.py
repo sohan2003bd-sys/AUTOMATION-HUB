@@ -32,6 +32,113 @@ def clean_query(q):
     return " ".join(q.split())[:60]
 
 
+# ---------- মানুষমুক্ত ফুটেজ ----------
+HUMAN_WORDS = set("""people person persons man men woman women boy boys girl girls child children kid kids baby babies
+family families couple couples crowd crowds team teams worker workers doctor doctors nurse nurses patient patients
+student students teacher teachers customer customers client clients employee employees businessman businesswoman
+entrepreneur entrepreneurs driver drivers farmer farmers chef chefs lady ladies guy guys male female adult adults
+teen teens teenager teenagers toddler mother mothers father fathers parent parents friend friends face faces portrait
+portraits selfie smiling smile hand hands finger fingers arm arms leg legs foot feet hair body bodies human humans
+someone pedestrian pedestrians tourist tourists traveler travelers passenger passengers shopper shoppers protester
+protesters audience politician politicians president minister athlete athletes player players model models bride
+groom wedding yoga massage hug hugging kissing dancing dancer dancers singer singers""".split())
+
+
+def _words(text):
+    return re.findall(r"[a-z]+", (text or "").lower())
+
+
+def is_human_word(w):
+    return w in HUMAN_WORDS or (w.endswith("s") and w[:-1] in HUMAN_WORDS) or (w.endswith("es") and w[:-2] in HUMAN_WORDS)
+
+
+def has_human_text(text):
+    """শিরোনাম/ট্যাগ/স্লাগে মানুষ-সংক্রান্ত শব্দ আছে কিনা (Pexels স্লাগ, alt-টেক্সট, Pixabay ট্যাগ ইত্যাদি)।"""
+    return any(is_human_word(w) for w in _words(text))
+
+
+def strip_human_words(query):
+    """কিওয়ার্ড থেকে মানুষ-সংক্রান্ত শব্দ বাদ দেয়। কিছু না থাকলে ফাঁকা।"""
+    return " ".join(w for w in (query or "").split() if not is_human_word(w.lower()))
+
+
+_DET = {}
+
+
+def _detectors():
+    """OpenCV থাকলে মুখ ও মানুষ শনাক্তকারী (বিনামূল্যে, CPU-তে); না থাকলে None — তখন শুধু লেখা-ভিত্তিক ছাঁকনি চলে।"""
+    if "d" in _DET:
+        return _DET["d"]
+    try:
+        import cv2
+    except ImportError:
+        print("  ℹ opencv নেই — ফুটেজে মুখ-শনাক্তকরণ বন্ধ, শুধু লেখা-ভিত্তিক ছাঁকনি চলছে", file=sys.stderr)
+        _DET["d"] = None
+        return None
+    faces = []
+    for n in ("haarcascade_frontalface_default.xml", "haarcascade_profileface.xml"):
+        try:
+            c = cv2.CascadeClassifier(os.path.join(cv2.data.haarcascades, n))
+            if not c.empty():
+                faces.append(c)
+        except Exception:
+            pass
+    hog = None
+    try:
+        hog = cv2.HOGDescriptor()
+        hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+    except Exception:
+        hog = None
+    if not faces and hog is None:
+        print("  ⚠ opencv-এ মুখ/মানুষ শনাক্তকারী পাওয়া যায়নি — শুধু লেখা-ভিত্তিক ছাঁকনি চলছে", file=sys.stderr)
+        _DET["d"] = None
+        return None
+    _DET["d"] = (cv2, faces, hog)
+    return _DET["d"]
+
+
+def _frame_has_person(cv2, faces, hog, img):
+    h, w = img.shape[:2]
+    if w > 640:
+        img = cv2.resize(img, (640, int(h * 640 / w)))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    for c in faces:
+        if len(c.detectMultiScale(gray, 1.1, 6, minSize=(36, 36))):
+            return True
+    if hog is not None:
+        rects, weights = hog.detectMultiScale(img, winStride=(8, 8), padding=(8, 8), scale=1.05)
+        if any(float(x) >= 0.7 for x in (weights.flatten() if hasattr(weights, "flatten") else weights)):
+            return True
+    return False
+
+
+def has_person(path, kind):
+    """ডাউনলোড-করা ছবি বা ভিডিওর ৩টি ফ্রেমে মুখ/মানুষ আছে কিনা। শনাক্ত করা না গেলে (ত্রুটি/ওপেনসিভি নেই) False।"""
+    det = _detectors()
+    if not det:
+        return False
+    cv2, faces, hog = det
+    try:
+        if kind == "image":
+            img = cv2.imread(str(path))
+            return img is not None and _frame_has_person(cv2, faces, hog, img)
+        cap = cv2.VideoCapture(str(path))
+        n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        found = False
+        for pos in ((0.15, 0.5, 0.85) if n > 10 else (0,)):
+            if n > 10:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, int(n * pos))
+            ok, img = cap.read()
+            if ok and _frame_has_person(cv2, faces, hog, img):
+                found = True
+                break
+        cap.release()
+        return found
+    except Exception as e:  # শনাক্তকরণে সমস্যা হলে ভিডিও আটকাবে না
+        print(f"  ⚠ মুখ-শনাক্তকরণ ব্যর্থ ({e})", file=sys.stderr)
+        return False
+
+
 def query_ladder(query, fallback):
     """আসল কিওয়ার্ড → ছোট করা কিওয়ার্ড → ক্যাটাগরির সাধারণ কিওয়ার্ড (পরপর চেষ্টা)।"""
     q = clean_query(query)
@@ -123,6 +230,7 @@ def _pexels_videos(q, rnd, min_dur):
         f = pick_video_file(v.get("video_files"))
         if f and (v.get("duration") or 0) >= min_dur:
             out.append({"id": f"pexels-v{v['id']}", "url": f["link"], "type": "video",
+                        "text": str(v.get("url", "")).rsplit("/video/", 1)[-1].replace("-", " "),
                         "credit": f"Pexels / {(v.get('user') or {}).get('name', '')}".strip(" /")})
     return out
 
@@ -138,7 +246,7 @@ def _pixabay_videos(q, rnd, min_dur):
         v = vs.get("medium") or vs.get("large") or {}
         # শুধু লম্বালম্বি বা চৌকো ক্লিপ — প্রশস্ত ক্লিপ কেটে ছোট হয়ে যায়
         if v.get("url") and (h.get("duration") or 0) >= min_dur and (v.get("height") or 0) >= (v.get("width") or 0) * 0.9:
-            out.append({"id": f"pixabay-v{h['id']}", "url": v["url"], "type": "video",
+            out.append({"id": f"pixabay-v{h['id']}", "url": v["url"], "type": "video", "text": h.get("tags", ""),
                         "credit": f"Pixabay / {h.get('user', '')}".strip(" /")})
     return out
 
@@ -150,7 +258,8 @@ def _pexels_photos(q, rnd, min_dur):
     d = _get(f"{PEXELS}/v1/search", headers={"Authorization": k},
              params={"query": q, "orientation": "portrait", "per_page": 15})
     return [{"id": f"pexels-p{p['id']}", "url": (p.get("src") or {}).get("large2x") or (p.get("src") or {}).get("large"),
-             "type": "image", "credit": f"Pexels / {p.get('photographer', '')}".strip(" /")}
+             "type": "image", "text": f"{p.get('alt', '')} {str(p.get('url', '')).rstrip('/').rsplit('/', 1)[-1].replace('-', ' ')}",
+             "credit": f"Pexels / {p.get('photographer', '')}".strip(" /")}
             for p in (d or {}).get("photos", []) if (p.get("src") or {}).get("large2x") or (p.get("src") or {}).get("large")]
 
 
@@ -161,7 +270,7 @@ def _pixabay_photos(q, rnd, min_dur):
     d = _get(f"{PIXABAY}/", params={"key": k, "q": q, "orientation": "vertical", "image_type": "photo",
                                     "safesearch": "true", "per_page": 20, "min_width": 1000})
     return [{"id": f"pixabay-p{h['id']}", "url": h["largeImageURL"], "type": "image",
-             "credit": f"Pixabay / {h.get('user', '')}".strip(" /")}
+             "text": h.get("tags", ""), "credit": f"Pixabay / {h.get('user', '')}".strip(" /")}
             for h in (d or {}).get("hits", []) if h.get("largeImageURL")]
 
 
@@ -179,6 +288,8 @@ def _unsplash_photos(q, rnd, min_dur):
         # raw লিংকে প্রস্থ/মান ঠিক করে নিই (imgix প্যারামিটার)
         url = f"{raw}{'&' if '?' in raw else '?'}w=1440&q=80&fm=jpg&fit=max"
         out.append({"id": f"unsplash-p{p['id']}", "url": url, "type": "image",
+                    "text": " ".join(str(x or "") for x in (p.get("alt_description"), p.get("description"))) + " "
+                            + " ".join(str(t.get("title", "")) for t in (p.get("tags") or []) if isinstance(t, dict)),
                     "credit": f"Unsplash / {(p.get('user') or {}).get('name', '')}".strip(" /"),
                     "track": (p.get("links") or {}).get("download_location")})
     return out
@@ -219,25 +330,35 @@ def fetch(cfg, query, fallback_query, workdir, tag, used):
         order += [_pexels_videos, _pixabay_videos]
     rnd = random.Random(f"{tag}-{query}")
     Path(workdir).mkdir(parents=True, exist_ok=True)
+    no_people = mc.get("no_people", True)
+    face_check = no_people and mc.get("face_check", True)
 
     def _try(fn, q):
         cands = [c for c in fn(q, rnd, min_dur) if not used.has(c["id"])]
+        if no_people:  # শিরোনাম/ট্যাগে মানুষ-সংক্রান্ত শব্দ থাকলে বাদ
+            cands = [c for c in cands if not has_human_text(c.get("text", ""))]
         rnd.shuffle(cands)
-        for c in cands[:3]:
+        for c in cands[:4]:
             ext = ".mp4" if c["type"] == "video" else ".jpg"
             dest = Path(workdir) / f"m_{tag}{ext}"
             if _download(c["url"], dest):
+                if face_check and has_person(dest, c["type"]):  # ছবি/ফ্রেমে মুখ বা মানুষ ধরা পড়লে বাদ
+                    used.add(c["id"])
+                    print(f"  ℹ মানুষ ধরা পড়ায় বাদ: {c['id']}", file=sys.stderr)
+                    continue
                 used.add(c["id"])
                 if c["id"].startswith("unsplash-"):
                     _unsplash_track(c)
                 return {"type": c["type"], "path": dest, "id": c["id"], "credit": c["credit"], "query": q}
         return None
 
-    for q in query_ladder(query, fallback_query):
+    queries = query_ladder(strip_human_words(clean_query(query)) if no_people else query,
+                           strip_human_words(fallback_query) if no_people else fallback_query)
+    for q in queries:
         for fn in order:
             got = _try(fn, q)
             if got:
                 return got
-    if mc.get("picsum_fallback", False):
+    if mc.get("picsum_fallback", False) and not no_people:  # Picsum-এর এলোমেলো ছবিতে মানুষ থাকতে পারে, তাই মানুষমুক্ত মোডে বন্ধ
         return _try(_picsum_photos, "random")
     return None

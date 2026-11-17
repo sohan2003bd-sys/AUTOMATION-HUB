@@ -189,6 +189,7 @@ class MoreImageSources(unittest.TestCase):
             self.assertFalse(media.available(cfg))
             self.assertIsNone(media.fetch(cfg, "x", "tech", tempfile.gettempdir(), "t", media.Used("/tmp/none2.json")))
             cfg["media"]["picsum_fallback"] = True
+            cfg["media"]["no_people"] = False  # মানুষমুক্ত মোডে Picsum ইচ্ছাকৃতভাবে বন্ধ (আলাদা পরীক্ষা আছে)
             self.assertTrue(media.available(cfg))
             got = []
             with tempfile.TemporaryDirectory() as d, mock.patch.object(media, "_download", self._dl(got)):

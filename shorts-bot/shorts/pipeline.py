@@ -4,10 +4,10 @@ import json
 from . import audio, config, media, render, research, scriptgen, tts
 
 DEFAULT_STOCK = {
-    "trending": "news city people", "health": "doctor hospital", "money": "money bank market",
-    "scam": "phone call worried", "law": "court law office", "science": "science space nature",
-    "tech": "technology smartphone", "career": "students office interview", "world": "world city skyline",
-    "life": "family home lifestyle",
+    "trending": "city skyline news", "health": "hospital corridor medicine", "money": "banknotes bank building",
+    "scam": "smartphone screen warning", "law": "courthouse law books", "science": "space stars nature",
+    "tech": "technology circuit smartphone", "career": "office desk laptop", "world": "world map city skyline",
+    "life": "home interior sunlight",
 }
 
 

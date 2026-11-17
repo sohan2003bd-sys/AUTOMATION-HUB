@@ -25,6 +25,8 @@ media:
   enabled: true
   prefer: video                # video (প্রথমে ফুটেজ, না মিললে ছবি) | photo
   min_clip_seconds: 3
+  no_people: true              # true = ভিডিওতে কোনো মানুষের ছবি/ফুটেজ নয় (কিওয়ার্ড, শিরোনাম/ট্যাগ ও মুখ-শনাক্তকরণ দিয়ে ছাঁকা)
+  face_check: true             # no_people চালু থাকলে ডাউনলোড-করা ছবি/ভিডিওর ফ্রেমে মুখ বা মানুষ ধরা পড়লে বাদ (OpenCV লাগে; না থাকলে শুধু লেখা-ছাঁকনি)
   picsum_fallback: false       # true = সব স্টক সাইটে না মিললে Lorem Picsum-এর এলোমেলো ছবি (কিওয়ার্ড মেলে না, তাই ডিফল্ট বন্ধ)
 
 tts:
