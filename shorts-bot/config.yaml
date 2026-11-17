@@ -83,7 +83,7 @@ script:
   max_retries: 2
 
 upload:
-  privacy: private             # private (শুরুতে নিরাপদ) | public | unlisted | schedule
+  privacy: public              # private (শুরুতে নিরাপদ) | public | unlisted | schedule
   category_id: "22"            # 22 = People & Blogs (মিশ্র বিষয়ের জন্য নিরাপদ); খবর-ঘেঁষা হলে 25, শিক্ষামূলক হলে 27
   language: bn
   notify_subscribers: false    # ১০টি করে আপলোডে সাবস্ক্রাইবারকে বারবার নোটিফিকেশন না পাঠাতে
