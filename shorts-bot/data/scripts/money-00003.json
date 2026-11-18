@@ -1,0 +1,68 @@
+{
+  "title": "দেশের বাজারে কমল সোনার দাম",
+  "description": "বিডিনিউজ টোয়েন্টিফোর ডটকমের তথ্য অনুযায়ী দেশের বাজারে সোনার দাম কমেছে। জেনে নিন বর্তমান বাজার পরিস্থিতি ও সাধারণ ক্রেতার জন্য করণীয়।",
+  "tags": [
+    "সোনার দাম",
+    "gold price bd",
+    "bdnews24",
+    "টাকা পয়সা",
+    "gold rate bangladesh",
+    "বাজারদর",
+    "সোনা",
+    "অর্থনীতি",
+    "gold price today",
+    "bangladesh news"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "দেশের বাজারে সোনার ভরি কমে এখন দুই লাখ পনেরো হাজার টাকায় নেমেছে, কিন্তু আসল কথা হলো বাজার এখনও বেশ উর্ধ্বমুখী।",
+      "screen_text": "দেশের বাজারে সোনার ভরি কমে এখন দুই",
+      "highlight": "",
+      "visual_query": "gold bars on table"
+    },
+    {
+      "kind": "step",
+      "narration": "এক, বিডিনিউজ টোয়েন্টিফোর ডটকমের তথ্য বলছে ১৮ নভেম্বর ২০২৬ তারিখে এই দাম কমার ঘটনা ঘটেছে।",
+      "screen_text": "এক, বিডিনিউজ টোয়েন্টিফোর ডটকমের তথ্য বলছে ১৮",
+      "highlight": "",
+      "visual_query": "smartphone screen glowing"
+    },
+    {
+      "kind": "step",
+      "narration": "দুই, আন্তর্জাতিক বাজারের সঙ্গে স্থানীয় চাহিদার ওপর ভিত্তি করে এই দাম নির্ধারিত হয়।",
+      "screen_text": "দুই, আন্তর্জাতিক বাজারের সঙ্গে স্থানীয় চাহিদার ওপর",
+      "highlight": "",
+      "visual_query": "stock market chart display"
+    },
+    {
+      "kind": "step",
+      "narration": "তিন, সাধারণ ক্রেতাদের জন্য এই ছোট পতন বড় কোনো স্বস্তি নয়, কারণ দাম এখনও সাধ্যের বাইরে।",
+      "screen_text": "তিন, সাধারণ ক্রেতাদের জন্য এই ছোট পতন",
+      "highlight": "",
+      "visual_query": "empty jewelry shop showcase"
+    },
+    {
+      "kind": "tip",
+      "narration": "তাই সোনা কেনার আগে বর্তমান বাজারদর ভালোভাবে যাচাই করে নিন এবং বিশ্ববাজারের গতিপ্রকৃতি লক্ষ্য রাখুন।",
+      "screen_text": "তাই সোনা কেনার আগে বর্তমান বাজারদর ভালোভাবে",
+      "highlight": "",
+      "visual_query": "calculator and notepad"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের সঠিক তথ্য জেনে তবেই নিজের জমানো টাকা খরচ করার সিদ্ধান্ত নিন।",
+      "screen_text": "বাজারের সঠিক তথ্য জেনে তবেই নিজের জমানো",
+      "highlight": "",
+      "visual_query": "stacked banknotes close up"
+    }
+  ],
+  "sources": [
+    "bdnews24.com"
+  ],
+  "facts": [
+    "সোনার ভরি কমে ২ লাখ ১৫ হাজার টাকা (সূত্র: bdnews24.com, Wed, 18 Nov 2026)"
+  ],
+  "fact_check": []
+}
