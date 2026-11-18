@@ -1,0 +1,61 @@
+{
+  "title": "টানা তৃতীয় দফায় কমল সোনা ও রুপার দাম",
+  "description": "দেশের বাজারে টানা তৃতীয় দফায় কমল সোনা ও রুপার দাম। জেনে নিন আজকের নতুন দরদাম এবং এই পরিবর্তনের সাধারণ প্রভাব সম্পর্কে।",
+  "tags": [
+    "সোনা",
+    "রুপা",
+    "Gold price Bangladesh",
+    "Silver price",
+    "আজকের সোনার দাম",
+    "বাজারদর",
+    "সোনা দাম কমল",
+    "Gold rate update",
+    "Business news",
+    "সচেতনতা"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "সোনা কেনার জন্য কি সবসময়ই বেশি দাম গুনতে হয়? ধারণাটা সব সময় ঠিক নয়।",
+      "screen_text": "সোনা কেনার জন্য কি সবসময়ই বেশি দাম",
+      "highlight": "",
+      "visual_query": "gold jewellery display showcase"
+    },
+    {
+      "kind": "step",
+      "narration": "দেশের বাজারে টানা তৃতীয় দফায় কমল সোনা ও রুপার দাম।",
+      "screen_text": "দেশের বাজারে টানা তৃতীয় দফায় কমল সোনা",
+      "highlight": "",
+      "visual_query": "market price board digital"
+    },
+    {
+      "kind": "step",
+      "narration": "দাম কমার এই ধারা ক্রেতাদের জন্য কিছুটা স্বস্তির সুযোগ তৈরি করেছে।",
+      "screen_text": "দাম কমার এই ধারা ক্রেতাদের জন্য কিছুটা",
+      "highlight": "",
+      "visual_query": "empty retail shop counter"
+    },
+    {
+      "kind": "tip",
+      "narration": "গহনা কেনার আগে পাকা রসিদ নেওয়া এবং বর্তমান বাজারদর যাচাই করে নেওয়া জরুরি।",
+      "screen_text": "গহনা কেনার আগে পাকা রসিদ নেওয়া এবং",
+      "highlight": "",
+      "visual_query": "calculator and pen on desk"
+    },
+    {
+      "kind": "outro",
+      "narration": "নিয়মিত বাজারদর খেয়াল রাখলে সঠিক সময়ে সিদ্ধান্ত নেওয়া সহজ হয়।",
+      "screen_text": "নিয়মিত বাজারদর খেয়াল রাখলে সঠিক সময়ে সিদ্ধান্ত",
+      "highlight": "",
+      "visual_query": "open newspaper financial page"
+    }
+  ],
+  "sources": [
+    "দেশেবিদেশে"
+  ],
+  "facts": [
+    "টানা তৃতীয় দফায় কমল সোনার দাম! জেনে নিন সোনা ও রুপার আজকের নতুন ... (সূত্র: দেশেবিদেশে, Wed, 11 Nov 2026)"
+  ],
+  "fact_check": []
+}
