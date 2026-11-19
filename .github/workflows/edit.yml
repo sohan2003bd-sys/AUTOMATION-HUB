@@ -38,8 +38,8 @@ jobs:
       - name: Docker image তৈরি (cached tools + Python packages)
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: Dockerfile
+          context: ./shorts-bot
+          file: ./shorts-bot/Dockerfile
           tags: shorts-bot:ci
           load: true
           cache-from: type=gha,scope=shorts-bot
