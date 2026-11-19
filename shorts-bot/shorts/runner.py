@@ -1,6 +1,7 @@
 """প্রতিদিনের কাজ: আইডিয়া ভরা → ভিডিও বানানো → ইউটিউবে আপলোড/শিডিউল।"""
 import json
 import math
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -46,22 +47,35 @@ def refill(cfg, store, count, budget_sec=300):
         return added
 
     if ic.get("trending"):
-        news = [c for c in cfg["categories"] if not c.get("evergreen", True)]
+        news_cats = [c for c in cfg["categories"] if not c.get("evergreen", True)]
 
         def fresh_n(c):
             return sum(1 for r in store.rows if r["category"] == c["id"] and r["status"] in live
                        and now - r.get("created", 0) < 40 * 3600)
 
-        need = count * 2
-        have = sum(fresh_n(c) for c in news)
+        # বাংলাদেশি ক্যালেন্ডার-দিনে সর্বোচ্চ নির্দিষ্ট সংখ্যক সংবাদ-ভিডিও; বাকি ভিডিও evergreen ক্যাটাগরি থেকে।
+        from datetime import timedelta
+        offset = timedelta(hours=(cfg.get("upload") or {}).get("timezone_offset_hours", 6))
+        local_today = (datetime.now(timezone.utc) + offset).date()
+        news_ids = {c["id"] for c in news_cats}
+        made_news_today = 0
+        for r in store.rows:
+            if r.get("category") in news_ids and r.get("created"):
+                created_day = (datetime.fromtimestamp(r["created"], timezone.utc) + offset).date()
+                if created_day == local_today:
+                    made_news_today += 1
+        daily_cap = max(0, int(ic.get("daily_news_max", 2)))
+        need = min(count * 2, max(0, daily_cap - made_news_today))
+        have = sum(fresh_n(c) for c in news_cats)
         done_n = {}
         for r in store.rows:
             if r["status"] in ("rendered", "uploaded"):
                 done_n[r["category"]] = done_n.get(r["category"], 0) + 1
-        for c in sorted(news, key=lambda c: (fresh_n(c), done_n.get(c["id"], 0))):
+        for c in sorted(news_cats, key=lambda c: (fresh_n(c), done_n.get(c["id"], 0))):
             if have >= need or state["stop"]:
                 break
-            have += run_job(c, 6)   # একবারে বেশি আইডিয়া = কম কল
+            want = min(need - have, max(1, count * 2 - state["left"]))
+            have += run_job(c, want)
     if state["stop"] or state["left"] >= count * 2:
         return errors
     target = count * 5
@@ -121,6 +135,29 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
     if mode not in ("private", "public", "unlisted", "schedule"):
         raise ValueError(f"অজানা privacy: {mode}")
 
+    # GitHub Actions-এর key slot (১–১০) প্রতিটি নির্ধারিত দৈনিক ভিডিওকে আলাদা Gemini key দেয়।
+    # হাতে চালালে বর্তমান UTC ২-ঘণ্টার ব্লক থেকে slot নির্ধারিত হয়।
+    base_key_index = None
+    if cfg["llm"].get("provider") == "gemini":
+        keys = llm.gemini_keys()
+        slot_env = os.environ.get("GEMINI_KEY_SLOT", "").strip()
+        # GitHub Actions-এর নির্ধারিত ১০-slot দৈনিক রান হলে ১০টি স্বতন্ত্র secret বাধ্যতামূলক।
+        # লোকাল ডেভেলপমেন্টে (slot env না থাকলে) এক/একাধিক key দিয়ে পরীক্ষা করা যায়।
+        if slot_env and len(keys) != 10:
+            raise RunError(
+                f"দৈনিক ১০টি আলাদা ভিডিওর জন্য ১০টি স্বতন্ত্র Gemini key দরকার; এখন পাওয়া গেছে {len(keys)}টি। "
+                "GitHub Secrets-এ GEMINI_API_KEY এবং GEMINI_API_KEY_2 থেকে GEMINI_API_KEY_10 পর্যন্ত ১০টি আলাদা key যোগ করুন।"
+            )
+        if keys:
+            try:
+                slot = int(slot_env)
+            except ValueError:
+                slot = 0
+            if not 1 <= slot <= 10:
+                slot = (datetime.now(timezone.utc).hour // 2) % 10 + 1
+            base_key_index = llm.pin_gemini_key(slot - 1)
+            print(f"🔑 আজকের ভিডিও slot {slot}: Gemini key #{base_key_index + 1} (এই ভিডিওতে একই key থাকবে)")
+
     if upload:
         youtube.get_access_token()  # টোকেন ভুল হলে শুরুতেই থেমে যাবে, কিছু নষ্ট হবে না
 
@@ -163,8 +200,13 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
     tried = {r["id"] for r in todo}
     spare = 1                       # ফ্যাক্ট-চেকে বাতিল হলে সর্বোচ্চ এতগুলো বিকল্প আইডিয়া নেওয়া হবে
     k = -1
+    video_key_offset = 0
     while queue:
         rec = queue.pop(0)
+        if base_key_index is not None:
+            current_key = llm.pin_gemini_key(base_key_index + video_key_offset)
+            print(f"  🔑 এই ভিডিওর Gemini key #{current_key + 1}")
+        video_key_offset += 1
         print(f"→ {rec['id']} {rec['topic']}")
         try:
             video = pipeline.make_one(cfg, store, rec, engine)
@@ -217,4 +259,5 @@ def run(cfg, store, count, privacy=None, engine=None, upload=True, info=None):
             print("  ⚠ Google ভিডিওটি Private রেখেছে — নতুন API প্রজেক্টের আপলোড অডিট ছাড়া Public হয় না।")
         if mode == "schedule" and not res["publish_at"]:
             print("  ⚠ শিডিউল সময় বসেনি — ভিডিও Private থেকে যেতে পারে (অডিট লাগতে পারে)।")
+    llm.unpin_gemini_key()
     return ok, bad, stopped

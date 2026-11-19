@@ -12,6 +12,26 @@ def norm(s: str) -> str:
     return re.sub(r"[\s\W_]+", "", s.lower())
 
 
+_STOP = {"এবং", "অথবা", "কিন্তু", "কেন", "কী", "কি", "কিভাবে", "কীভাবে", "করে", "করার", "করুন",
+         "জন্য", "থেকে", "নিয়ে", "নিয়ে", "আপনি", "আপনার", "একটি", "এক", "কোন", "কোনটি", "হবে", "হয়", "হয়",
+         "এখন", "আজ", "নতুন", "সহজ", "উপায়", "উপায়", "যা", "যেভাবে", "সব", "আর", "বা", "ও", "the", "and", "how", "to"}
+
+
+def _topic_tokens(value):
+    return {w for w in re.findall(r"[\w]+", str(value).casefold()) if len(w) > 1 and w not in _STOP}
+
+
+def _similar_topic(a, b):
+    na, nb = norm(a), norm(b)
+    if not na or not nb:
+        return False
+    if na == nb or difflib.SequenceMatcher(None, na, nb).ratio() >= 0.82:
+        return True
+    ta, tb = _topic_tokens(a), _topic_tokens(b)
+    common = ta & tb
+    return len(common) >= 3 and len(common) / max(1, min(len(ta), len(tb))) >= 0.72
+
+
 class Store:
     def __init__(self, path):
         self.path = Path(path)
@@ -33,19 +53,16 @@ class Store:
         return t[-limit:] if limit else t
 
     def is_dup(self, category, topic, recent=400):
-        n = norm(topic)
-        if not n:
+        if not norm(topic):
             return True
-        for old in self.topics(category, recent):
-            o = norm(old)
-            if o == n or difflib.SequenceMatcher(None, o, n).ratio() >= 0.85:
-                return True
-        # অন্য ক্যাটাগরিতেও একই খবর/বিষয় যেন না আসে (যেমন 'আলোচিত' ও 'বিশ্ব')
-        others = [r["topic"] for r in self.rows if r["category"] != category][-150:]
-        for old in others:
-            if difflib.SequenceMatcher(None, norm(old), n).ratio() >= 0.8:
+        # একই ক্যাটাগরি ও অন্য ক্যাটাগরি—দুই জায়গাতেই আগের বিষয়ের সঙ্গে মিল পরীক্ষা।
+        # দীর্ঘ ইতিহাস রাখা হয়, যাতে একই সংবাদ কয়েক সপ্তাহ পর নতুন শব্দে আবার না আসে।
+        for row in self.rows:
+            old = row.get("topic", "")
+            if old and _similar_topic(topic, old):
                 return True
         return False
+
 
     def add_topics(self, category, topics):
         added = 0

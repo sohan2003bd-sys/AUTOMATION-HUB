@@ -37,6 +37,16 @@ class Step2(unittest.TestCase):
         later = datetime(2026, 11, 18, 0, 0, tzinfo=timezone.utc)
         self.assertGreater(youtube.next_slots(cfg, 1, later, now)[0], later)
 
+    def test_scheduled_gemini_run_requires_ten_unique_keys(self):
+        cfg = config.load()
+        with tempfile.TemporaryDirectory() as d:
+            st = Store(os.path.join(d, "queue.jsonl"))
+            env = {"GEMINI_API_KEY": "key-one", "GEMINI_API_KEY_2": "key-two", "GEMINI_KEY_SLOT": "1"}
+            with mock.patch.dict(os.environ, env, clear=True):
+                with self.assertRaises(runner.RunError) as cm:
+                    runner.run(cfg, st, 1, upload=False)
+        self.assertIn("১০টি স্বতন্ত্র Gemini key", str(cm.exception))
+
     def test_monthly_limit(self):
         from shorts import runner
         cfg = {"limits": {"monthly_max": 60}, "upload": {"timezone_offset_hours": 6}}

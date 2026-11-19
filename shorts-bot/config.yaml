@@ -12,7 +12,7 @@ llm:
   grounding: false                             # গুগল-সার্চ (Gemini গ্রাউন্ডিং): ফ্রি টিয়ারে বন্ধ/সীমিত। false = চেষ্টাই করে না, বদলে সংবাদ-শিরোনাম (news:) ব্যবহার হয়; বিলিং চালু করলে true
   gemini_thinking: low                         # low (কম টোকেন, দ্রুত) | medium | high — Gemini 3.x-এর চিন্তার স্তর
   # কী (key) এনভায়রনমেন্টে রাখুন: ANTHROPIC_API_KEY অথবা GEMINI_API_KEY
-  # Gemini-র ৫টি কী দিতে পারেন: GEMINI_API_KEY, GEMINI_API_KEY_2 … GEMINI_API_KEY_5 — একটার কোটা শেষ হলে পরেরটা, গোল ঘুরে
+  # ১০টি আলাদা key: GEMINI_API_KEY, GEMINI_API_KEY_2 … GEMINI_API_KEY_10। প্রতি ভিডিওর জন্য একটি key স্থির থাকবে।
 
 # ---- গবেষণা ও ফ্যাক্ট-চেক (শুধু provider: gemini-তে; গুগল সার্চ দিয়ে তথ্য যাচাই) ----
 research:
@@ -25,8 +25,10 @@ media:
   enabled: true
   prefer: video                # video (প্রথমে ফুটেজ, না মিললে ছবি) | photo
   min_clip_seconds: 3
-  no_people: true              # true = ভিডিওতে কোনো মানুষের ছবি/ফুটেজ নয় (কিওয়ার্ড, শিরোনাম/ট্যাগ ও মুখ-শনাক্তকরণ দিয়ে ছাঁকা)
-  face_check: true             # no_people চালু থাকলে ডাউনলোড-করা ছবি/ভিডিওর ফ্রেমে মুখ বা মানুষ ধরা পড়লে বাদ (OpenCV লাগে; না থাকলে শুধু লেখা-ছাঁকনি)
+  no_people: false             # false = মানুষ থাকতে পারে, তবে people_max_scenes সীমা মানবে
+  face_check: true             # ডাউনলোড-করা ছবি/ভিডিওর ফ্রেমে মানুষ শনাক্ত করে; OpenCV প্রয়োজন
+  people_max_scenes: 1         # প্রতি ভিডিওতে সর্বোচ্চ ১টি দৃশ্যে মানুষ (বাকি দৃশ্য মানুষবিহীন)
+  people_max_ratio: 0.20       # সর্বোচ্চ দৃশ্য-অনুপাত; কম দৃশ্যের ভিডিওতেও ১টির বেশি হবে না
   picsum_fallback: false       # true = সব স্টক সাইটে না মিললে Lorem Picsum-এর এলোমেলো ছবি (কিওয়ার্ড মেলে না, তাই ডিফল্ট বন্ধ)
 
 tts:
@@ -34,7 +36,7 @@ tts:
   voice: bn-BD-NabanitaNeural  # voices তালিকা থাকলে এটা শুধু শেষ ভরসা
   rate: "+4%"                  # সবার জন্য ভিত্তি গতি; প্রতি ভিডিওতে tone ও এলোমেলো ওঠানামা যোগ হয়
   pitch: "+0Hz"
-  alternate_gender: true       # true = পরপর ভিডিওতে নারী ↔ পুরুষ কণ্ঠ ঘুরে ঘুরে (দিনে ২টিতে একটা নারী, একটা পুরুষ)
+  alternate_gender: true       # true = পরপর ভিডিওতে নারী ↔ পুরুষ কণ্ঠ ঘুরে ঘুরে
   jitter: true                 # প্রতি ভিডিওতে গতি/পিচে সামান্য এলোমেলো পরিবর্তন, যাতে সব ভিডিও একই ছাঁচের না শোনায়
   # একটা ভিডিওর সব দৃশ্য একই কণ্ঠে হয়। weight বেশি = বেশি বার বাছা হবে।
   voices:
@@ -54,13 +56,13 @@ video:
   width: 1080
   height: 1920
   fps: 30
-  transition: 0.35             # দৃশ্য বদলের ট্রানজিশনের সময় (সেকেন্ড); 0 = সরাসরি কাট
+  transition: 0.42             # মসৃণ দৃশ্য বদলের সময় (সেকেন্ড); 0 = সরাসরি কাট
   scene_pad: 0.45              # প্রতি দৃশ্যের কথার পর বিরতি (সেকেন্ড)
   style: subtitles             # subtitles = পর্দায় শুধু বাংলা সাবটাইটেল (কোনো হেডলাইন/চিপ/বার নেই) | classic = আগের হেডলাইনসহ ডিজাইন
   captions: true               # কথার সঙ্গে সঙ্গে বাংলা সাবটাইটেল
   caption_words: 4             # এক সাবটাইটেলে সর্বোচ্চ শব্দ
   looks: true                  # প্রতি ভিডিওর আলাদা রঙের ছোঁয়া/গ্রেইন/ভিগনেট — ফুটেজ আসল ক্যামেরার মতো ও প্রতিটি ভিডিও আলাদা দেখায়
-  motion: zoom
+  motion: cinematic           # আসল ফুটেজেও খুব হালকা ক্যামেরা প্যান/জুম; none = বন্ধ
   font: ""                     # বাংলা ফন্টের পাথ। ফাঁকা থাকলে নিজে খুঁজে নেবে (Noto Sans Bengali)
 
 # ---- নিজের ভিডিও স্মার্ট এডিট (python -m shorts edit ফাইল.mp4) ----
@@ -72,7 +74,7 @@ smartedit:
   captions: true               # Gemini দিয়ে বাংলা/ইংরেজি ক্যাপশন (provider: gemini লাগবে)
   loudnorm: true
 
-# ---- সীমা: মাসে সর্বোচ্চ এতগুলো ভিডিও আপলোড (দিনে ২টি × ৩০ = ৬০); ১০ ক্যাটাগরি ঘুরিয়ে ঘুরিয়ে, প্রতিটি থেকে ~৬টি ----
+# ---- সীমা: দিনে ১০টি × ৩০ দিন = মাসে সর্বোচ্চ ৩০০টি ----
 limits:
   monthly_max: 300             # (দিনে ১০ × ৩০) 0 = সীমা নেই
 
@@ -83,12 +85,12 @@ script:
   max_retries: 2
 
 upload:
-  privacy: public              # private (শুরুতে নিরাপদ) | public | unlisted | schedule
+  privacy: schedule            # schedule = প্রতিদিনের ১০টি নির্ধারিত সময়ে প্রকাশ; public = তৈরি হলেই প্রকাশ
   category_id: "22"            # 22 = People & Blogs (মিশ্র বিষয়ের জন্য নিরাপদ); খবর-ঘেঁষা হলে 25, শিক্ষামূলক হলে 27
   language: bn
   notify_subscribers: false    # ১০টি করে আপলোডে সাবস্ক্রাইবারকে বারবার নোটিফিকেশন না পাঠাতে
   timezone_offset_hours: 6     # বাংলাদেশ = +6
-  slots: ["13:00", "20:00"]   # schedule মোডে প্রকাশের সময় (দিনে ২টি)
+  slots: ["06:45", "08:45", "10:45", "12:45", "14:45", "16:45", "18:45", "20:45", "22:45", "00:45"]  # বাংলাদেশ সময়ে দিনে ১০টি
 
 paths:
   data_dir: data
@@ -115,21 +117,27 @@ news:
 
 # ---- আইডিয়া: আজকের ভাইরাল ও জানা-দরকার বিষয় (গুগল সার্চ দিয়ে খুঁজে) ----
 ideas:
-  trending: true               # true = প্রতিদিন গুগল সার্চে বাংলাদেশ ও বিশ্বের আজকের আলোচিত বিষয় খুঁজে আইডিয়া বানায় (provider: gemini লাগবে)
-  allow_news_without_search: false   # গুগল-সার্চ না চললে আলোচিত-ধরনের ক্যাটাগরি বাদ (true = মডেলের স্মৃতি থেকে; ভুল তথ্যের ঝুঁকি)
-  max_age_days: 2              # এত দিনের পুরনো (আলোচিত) আইডিয়া ফেলে দেওয়া হয়, যাতে ভিডিও সবসময় টাটকা থাকে
+  trending: true               # শুধু trending ক্যাটাগরিতে সাম্প্রতিক সংবাদ; বাকি ক্যাটাগরি সময়-নিরপেক্ষ
+  daily_news_max: 2            # দিনে সর্বোচ্চ ২টি নতুন সংবাদ-আইডিয়া; বাকি ভিডিও নানা evergreen বিষয় থেকে
+  allow_news_without_search: false   # সার্চ না চললে মডেলের স্মৃতি থেকে খবর বানাবে না
+  max_age_days: 2              # এত দিনের পুরনো সংবাদ-আইডিয়া বাদ
   country: Bangladesh          # কোন দেশের দর্শকের জন্য আলোচিত বিষয় বাছা হবে
 
 # ====== ক্যাটাগরি: ভাইরাল ও মানুষের জানা দরকার এমন বিষয় ======
-# evergreen: true = আইডিয়া পুরনো হয় না (স্বাস্থ্য, টাকা-পয়সা ইত্যাদি); false = শুধু টাটকা আলোচনার বিষয়
+# evergreen: true = শুধু সময়-নিরপেক্ষ আইডিয়া; false = সংবাদ-সার্চ। সংবাদ আলাদা রাখতে শুধু trending false।
 categories:
   - {id: trending,   name: "আজকের আলোচিত",          accent: "#EF4444", evergreen: false, stock: "news city people",   hint: "আজ বাংলাদেশ ও বিশ্বে যে বিষয়গুলো সবচেয়ে বেশি আলোচিত ও মানুষ জানতে চাইছে (নির্ভরযোগ্য সূত্রে নিশ্চিত খবর, গুজব নয়)"}
-  - {id: health,     name: "স্বাস্থ্য ও সতর্কতা",     accent: "#10B981", evergreen: true,  stock: "doctor hospital",   hint: "এখন আলোচিত রোগ-ব্যাধি, মৌসুমি অসুখ, খাবার ও জীবনযাপনের এমন তথ্য যা সবার জানা দরকার (চিকিৎসা-পরামর্শ নয়, সচেতনতা)"}
-  - {id: money,      name: "টাকা-পয়সা",              accent: "#F59E0B", evergreen: false, stock: "money bank market", hint: "দ্রব্যমূল্য, ডলার-সোনার দাম, ব্যাংক, সঞ্চয়, ট্যাক্স, মোবাইল ব্যাংকিং—যা সাধারণ মানুষের পকেটে প্রভাব ফেলে"}
-  - {id: scam,       name: "প্রতারণা থেকে সাবধান",     accent: "#DC2626", evergreen: false, stock: "phone call worried", hint: "এখন যে প্রতারণা, স্ক্যাম ও ভুয়া খবর ছড়াচ্ছে এবং কীভাবে চিনবেন ও বাঁচবেন"}
-  - {id: law,        name: "আইন ও অধিকার",            accent: "#3B82F6", evergreen: true,  stock: "court law office",  hint: "নাগরিকের আইনি অধিকার, নতুন নিয়ম-নীতি, সরকারি সেবা ও কাগজপত্রের সহজ ব্যাখ্যা"}
-  - {id: science,    name: "বিজ্ঞান ও বিস্ময়",        accent: "#8B5CF6", evergreen: true,  stock: "science space nature", hint: "মহাকাশ, প্রকৃতি, মানবদেহ ও নতুন আবিষ্কারের সত্য, চমকপ্রদ কিন্তু যাচাই-করা তথ্য"}
-  - {id: tech,       name: "প্রযুক্তি ও AI",           accent: "#06B6D4", evergreen: false, stock: "technology smartphone", hint: "এখন আলোচিত নতুন প্রযুক্তি, AI, ফোন ও অ্যাপের খবর এবং তা সাধারণ মানুষের কী কাজে লাগে"}
-  - {id: career,     name: "চাকরি ও শিক্ষা",           accent: "#F97316", evergreen: false, stock: "students office interview", hint: "চাকরির বাজার, পরীক্ষা, ভর্তি, বিদেশে পড়াশোনা-কাজের সঠিক তথ্য ও দরকারি কৌশল"}
-  - {id: world,      name: "বিশ্ব ঘটনা সহজে",          accent: "#EC4899", evergreen: false, stock: "world city skyline", hint: "বিশ্বের বড় ঘটনা (যুদ্ধ, অর্থনীতি, পরিবেশ, মহামারি ইত্যাদি) বাংলাদেশির দৃষ্টিতে সহজ ভাষায়, পক্ষপাতহীনভাবে"}
+  - {id: health,     name: "স্বাস্থ্য ও সতর্কতা",     accent: "#10B981", evergreen: true,  stock: "hospital corridor medicine", hint: "ঘুম, পুষ্টি, শরীরের সাধারণ কার্যপ্রণালী, স্বাস্থ্য-সচেতনতা ও দৈনন্দিন সুস্থ অভ্যাস (ব্যক্তিগত চিকিৎসা-পরামর্শ নয়)"}
+  - {id: money,      name: "টাকা-পয়সা",              accent: "#F59E0B", evergreen: true,  stock: "money bank market", hint: "বাজেট, সঞ্চয়, সুদ, ব্যাংকিং, মোবাইল পেমেন্ট, আর্থিক সচেতনতা ও দৈনন্দিন অর্থ ব্যবস্থাপনার সহজ কৌশল"}
+  - {id: scam,       name: "প্রতারণা থেকে সাবধান",     accent: "#DC2626", evergreen: true,  stock: "phone security warning", hint: "ফোন, অনলাইন, কেনাকাটা ও ডিজিটাল পেমেন্টে প্রতারণা চেনার লক্ষণ এবং নিরাপদ থাকার বাস্তব কৌশল"}
+  - {id: law,        name: "আইন ও অধিকার",            accent: "#3B82F6", evergreen: true,  stock: "court law office",  hint: "নাগরিকের সাধারণ আইনি অধিকার, সরকারি সেবা নেওয়ার ধাপ, কাগজপত্র ও দৈনন্দিন আইন বোঝার সহজ ব্যাখ্যা"}
+  - {id: science,    name: "বিজ্ঞান ও বিস্ময়",        accent: "#8B5CF6", evergreen: true,  stock: "science space nature", hint: "মহাকাশ, প্রকৃতি, পদার্থবিজ্ঞান, মানবদেহ ও দৈনন্দিন জীবনের পেছনের বিজ্ঞান—চমকপ্রদ কিন্তু যাচাই-করা তথ্য"}
+  - {id: tech,       name: "প্রযুক্তি ও AI",           accent: "#06B6D4", evergreen: true,  stock: "technology smartphone", hint: "AI কীভাবে কাজ করে, ফোন-অ্যাপের দরকারি ফিচার, ডিজিটাল নিরাপত্তা, প্রযুক্তির ব্যবহার ও ভবিষ্যৎ"}
+  - {id: career,     name: "চাকরি ও শিক্ষা",           accent: "#F97316", evergreen: true,  stock: "office desk laptop", hint: "শেখার কৌশল, পড়াশোনার অভ্যাস, CV, ইন্টারভিউ, দক্ষতা উন্নয়ন ও ক্যারিয়ার পরিকল্পনার বাস্তব পরামর্শ"}
+  - {id: world,      name: "বিশ্ব ও ভূগোল",           accent: "#EC4899", evergreen: true,  stock: "world map city skyline", hint: "দেশ, ভূগোল, বিশ্ব অর্থনীতি, সংস্কৃতি, জলবায়ু ও আন্তর্জাতিক ব্যবস্থার সময়-নিরপেক্ষ সহজ ব্যাখ্যা"}
   - {id: life,       name: "জীবনযাপন ও সম্পর্ক",       accent: "#14B8A6", evergreen: true,  stock: "family home lifestyle", hint: "পরিবার, সন্তান-লালন, মানসিক চাপ সামলানো, ঘরোয়া সমস্যা ও দৈনন্দিন জীবনের কাজের কৌশল"}
+
+  - {id: environment, name: "পরিবেশ ও জলবায়ু", accent: "#16A34A", evergreen: true, stock: "nature river weather", hint: "জলবায়ু, দূষণ, পানি, বন, দুর্যোগ-প্রস্তুতি ও পরিবেশবান্ধব দৈনন্দিন অভ্যাসের বিজ্ঞানভিত্তিক তথ্য"}
+  - {id: history,     name: "ইতিহাস ও অজানা তথ্য", accent: "#A16207", evergreen: true, stock: "ancient architecture historical ruins", hint: "বাংলাদেশ ও বিশ্বের ইতিহাস, সভ্যতা, আবিষ্কার, ঐতিহাসিক স্থাপনা ও অজানা কিন্তু যাচাইযোগ্য ঘটনা"}
+  - {id: culture,     name: "খাবার, সংস্কৃতি ও ভ্রমণ", accent: "#DB2777", evergreen: true, stock: "food market travel landscape", hint: "খাবারের ইতিহাস, দেশ-বিদেশের সংস্কৃতি, ভ্রমণস্থানের বৈশিষ্ট্য, ঐতিহ্য ও দৈনন্দিন জীবনধারার তথ্য"}
+  - {id: psychology, name: "মনস্তত্ত্ব ও অভ্যাস", accent: "#7C3AED", evergreen: true, stock: "journal desk brain science", hint: "মনস্তত্ত্ব, স্মৃতি, মনোযোগ, ঘুম, অভ্যাস গঠন, সিদ্ধান্ত নেওয়া ও আচরণবিজ্ঞানের সহজ ব্যাখ্যা"}

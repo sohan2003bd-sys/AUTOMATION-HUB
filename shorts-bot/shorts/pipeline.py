@@ -7,7 +7,8 @@ DEFAULT_STOCK = {
     "trending": "city skyline news", "health": "hospital corridor medicine", "money": "banknotes bank building",
     "scam": "smartphone screen warning", "law": "courthouse law books", "science": "space stars nature",
     "tech": "technology circuit smartphone", "career": "office desk laptop", "world": "world map city skyline",
-    "life": "home interior sunlight",
+    "life": "home interior sunlight", "environment": "nature river weather", "history": "ancient architecture historical ruins",
+    "culture": "food market travel landscape", "psychology": "journal desk brain science",
 }
 
 
@@ -22,9 +23,11 @@ def fetch_media(cfg, cat, script, work, vid_id):
     used = media.Used(config.data_dir(cfg) / "media_used.json")
     fallback = cat.get("stock") or DEFAULT_STOCK.get(cat["id"], "technology")
     items = []
+    media_state = {"people_scenes": 0, "total_scenes": len(script["scenes"])}
     for i, sc in enumerate(script["scenes"]):
         try:
-            items.append(media.fetch(cfg, sc.get("visual_query", ""), fallback, work, f"{vid_id}-{i}", used))
+            items.append(media.fetch(cfg, sc.get("visual_query", ""), fallback, work, f"{vid_id}-{i}", used,
+                                     state=media_state))
         except Exception as e:  # মিডিয়ায় সমস্যা হলে ভিডিও আটকাবে না
             print(f"  ⚠ দৃশ্য {i + 1}-এর ফুটেজ পাওয়া যায়নি: {e}")
             items.append(None)

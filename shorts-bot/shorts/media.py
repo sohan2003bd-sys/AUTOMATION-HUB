@@ -7,6 +7,7 @@ Lorem Picsum কিওয়ার্ড বোঝে না (এলোমেল
 একই ক্লিপ বারবার না আসতে `data/media_used.json`-এ ব্যবহার হওয়া আইডি মনে রাখা হয়।
 """
 import json
+import math
 import os
 import random
 import re
@@ -40,7 +41,7 @@ entrepreneur entrepreneurs driver drivers farmer farmers chef chefs lady ladies 
 teen teens teenager teenagers toddler mother mothers father fathers parent parents friend friends face faces portrait
 portraits selfie smiling smile hand hands finger fingers arm arms leg legs foot feet hair body bodies human humans
 someone pedestrian pedestrians tourist tourists traveler travelers passenger passengers shopper shoppers protester
-protesters audience politician politicians president minister athlete athletes player players model models bride
+protesters audience group groups gathering gatherings politician politicians president minister athlete athletes player players model models bride
 groom wedding yoga massage hug hugging kissing dancing dancer dancers singer singers""".split())
 
 
@@ -318,8 +319,8 @@ def available(cfg=None) -> bool:
     return bool(_key("PEXELS_API_KEY") or _key("PIXABAY_API_KEY") or _key("UNSPLASH_ACCESS_KEY"))
 
 
-def fetch(cfg, query, fallback_query, workdir, tag, used):
-    """একটা দৃশ্যের জন্য ফুটেজ/ছবি আনে। ফেরত: {"type", "path", "id", "credit"} বা None।"""
+def fetch(cfg, query, fallback_query, workdir, tag, used, state=None):
+    """একটা দৃশ্যের জন্য ফুটেজ/ছবি আনে। state একই ভিডিওর দৃশ্যগুলোর মধ্যে people cap ভাগ করে।"""
     mc = cfg.get("media") or {}
     if not mc.get("enabled", False) or not available(cfg):
         return None
@@ -331,34 +332,57 @@ def fetch(cfg, query, fallback_query, workdir, tag, used):
     rnd = random.Random(f"{tag}-{query}")
     Path(workdir).mkdir(parents=True, exist_ok=True)
     no_people = mc.get("no_people", True)
-    face_check = no_people and mc.get("face_check", True)
+    face_check = mc.get("face_check", True)
+    state = state if state is not None else {"people_scenes": 0, "total_scenes": 1}
+    total_scenes = max(1, int(state.get("total_scenes", 1)))
+    ratio = max(0.0, min(1.0, float(mc.get("people_max_ratio", 0.20))))
+    configured_max = max(0, int(mc.get("people_max_scenes", 1)))
+    people_limit = 0 if no_people or ratio <= 0 else min(configured_max, int(math.floor(total_scenes * ratio + 1e-9)))
 
     def _try(fn, q):
         cands = [c for c in fn(q, rnd, min_dur) if not used.has(c["id"])]
-        if no_people:  # শিরোনাম/ট্যাগে মানুষ-সংক্রান্ত শব্দ থাকলে বাদ
-            cands = [c for c in cands if not has_human_text(c.get("text", ""))]
         rnd.shuffle(cands)
-        for c in cands[:4]:
+        for c in cands[:6]:
+            text_person = has_human_text(c.get("text", ""))
+            if no_people and text_person:
+                continue  # মানুষমুক্ত মোডে শব্দ-ভিত্তিক ছাঁকনি
+            if text_person and state.get("people_scenes", 0) >= people_limit:
+                continue  # প্রতি ভিডিওতে নির্ধারিত মানুষ-দৃশ্যের সীমা
             ext = ".mp4" if c["type"] == "video" else ".jpg"
             dest = Path(workdir) / f"m_{tag}{ext}"
-            if _download(c["url"], dest):
-                if face_check and has_person(dest, c["type"]):  # ছবি/ফ্রেমে মুখ বা মানুষ ধরা পড়লে বাদ
-                    used.add(c["id"])
-                    print(f"  ℹ মানুষ ধরা পড়ায় বাদ: {c['id']}", file=sys.stderr)
-                    continue
+            if not _download(c["url"], dest):
+                continue
+            detected_person = has_person(dest, c["type"]) if face_check else False
+            has_people = text_person or detected_person
+            if no_people and detected_person:
                 used.add(c["id"])
-                if c["id"].startswith("unsplash-"):
-                    _unsplash_track(c)
-                return {"type": c["type"], "path": dest, "id": c["id"], "credit": c["credit"], "query": q}
+                print(f"  ℹ মানুষ ধরা পড়ায় বাদ: {c['id']}", file=sys.stderr)
+                continue
+            if has_people and state.get("people_scenes", 0) >= people_limit:
+                used.add(c["id"])
+                print(f"  ℹ প্রতি ভিডিওর মানুষ-দৃশ্যের সীমা পূর্ণ: {c['id']}", file=sys.stderr)
+                continue
+            if has_people:
+                state["people_scenes"] = state.get("people_scenes", 0) + 1
+            used.add(c["id"])
+            if c["id"].startswith("unsplash-"):
+                _unsplash_track(c)
+            return {"type": c["type"], "path": dest, "id": c["id"], "credit": c["credit"],
+                    "query": q, "has_people": has_people}
         return None
 
-    queries = query_ladder(strip_human_words(clean_query(query)) if no_people else query,
-                           strip_human_words(fallback_query) if no_people else fallback_query)
+    base_query = strip_human_words(clean_query(query)) if no_people else query
+    base_fallback = strip_human_words(fallback_query) if no_people else fallback_query
+    queries = query_ladder(base_query, base_fallback)
+    # মানুষের দৃশ্যের সীমা পূর্ণ হলে একই অর্থের মানুষবিহীন বিকল্প query-ও খোঁজা হয়।
+    if not no_people and state.get("people_scenes", 0) >= people_limit:
+        safe_queries = query_ladder(strip_human_words(clean_query(query)), strip_human_words(fallback_query))
+        queries.extend(q for q in safe_queries if q and q not in queries)
     for q in queries:
         for fn in order:
             got = _try(fn, q)
             if got:
                 return got
-    if mc.get("picsum_fallback", False) and not no_people:  # Picsum-এর এলোমেলো ছবিতে মানুষ থাকতে পারে, তাই মানুষমুক্ত মোডে বন্ধ
+    if mc.get("picsum_fallback", False) and not no_people:
         return _try(_picsum_photos, "random")
     return None

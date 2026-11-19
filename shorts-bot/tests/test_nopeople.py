@@ -26,7 +26,8 @@ class Words(unittest.TestCase):
 
     def test_prompt_forbids_people(self):
         p = scriptgen.build_prompt(config.load(), {"name": "x"}, "বিষয়", "s")
-        self.assertIn("কোনো মানুষ", p)
+        self.assertIn("অন্তত ৮০% দৃশ্যে মানুষ থাকবে না", p)
+        self.assertIn("সর্বোচ্চ ১টি দৃশ্যে", p)
         self.assertNotIn("doctor talking to patient", p)
 
     def test_default_stock_has_no_people_words(self):
@@ -46,6 +47,7 @@ class Fetch(unittest.TestCase):
 
     def test_text_filter_skips_people_clips(self):
         cfg = config.load()
+        cfg["media"]["no_people"] = True
         cfg["media"]["face_check"] = False
         got = []
 
@@ -76,12 +78,44 @@ class Fetch(unittest.TestCase):
         with mock.patch.dict(os.environ, self.ENV), tempfile.TemporaryDirectory() as d, \
                 mock.patch.object(media, "_pexels_videos", return_value=cands), \
                 mock.patch.object(media, "_download", dl), mock.patch.object(media, "has_person", person):
-            m = media.fetch(cfg, "street", "tech", d, "t", media.Used(Path(d) / "u.json"))
-        self.assertEqual(len(seen), 2)                     # প্রথমটিতে মানুষ ধরা পড়ল, দ্বিতীয়টি নেওয়া হলো
+            m = media.fetch(cfg, "street", "tech", d, "t", media.Used(Path(d) / "u.json"),
+                            state={"people_scenes": 1, "total_scenes": 5})
+        self.assertEqual(len(seen), 2)                     # মানুষ-দৃশ্যের সীমা আগে পূর্ণ, দুই প্রার্থীই যাচাই
         self.assertIn(m["id"], ("pexels-v5", "pexels-v6"))
+
+    def test_people_scene_cap_is_shared_across_one_video(self):
+        cfg = config.load()
+        cfg["media"]["face_check"] = False
+        state = {"people_scenes": 0, "total_scenes": 5}
+
+        def dl(url, dest):
+            Path(dest).write_bytes(b"x" * 20000)
+            return True
+
+        def vids(q, rnd, md):
+            if q == "woman using phone":
+                return [{"id": "human-scene-1", "url": "u1", "type": "video",
+                         "text": "woman using phone", "credit": "c"}]
+            if q == "man using laptop":
+                return [{"id": "human-scene-2", "url": "u2", "type": "video",
+                         "text": "man using laptop", "credit": "c"}]
+            return []
+
+        with mock.patch.dict(os.environ, self.ENV), tempfile.TemporaryDirectory() as d, \
+                mock.patch.object(media, "_pexels_videos", vids), mock.patch.object(media, "_pexels_photos", return_value=[]), \
+                mock.patch.object(media, "_pixabay_videos", return_value=[]), mock.patch.object(media, "_pixabay_photos", return_value=[]), \
+                mock.patch.object(media, "_unsplash_photos", return_value=[]), mock.patch.object(media, "_download", dl):
+            used = media.Used(Path(d) / "used.json")
+            first = media.fetch(cfg, "woman using phone", "technology phone", d, "first", used, state=state)
+            second = media.fetch(cfg, "man using laptop", "office laptop", d, "second", used, state=state)
+        self.assertIsNotNone(first)
+        self.assertTrue(first["has_people"])
+        self.assertIsNone(second)
+        self.assertEqual(state["people_scenes"], 1)
 
     def test_human_only_query_falls_back_to_safe_default(self):
         cfg = config.load()
+        cfg["media"]["no_people"] = True
         cfg["media"]["face_check"] = False
         qs = []
 

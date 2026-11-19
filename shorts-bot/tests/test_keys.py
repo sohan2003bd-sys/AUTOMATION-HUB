@@ -24,6 +24,7 @@ QUOTA = _resp(429, {"error": {"status": "RESOURCE_EXHAUSTED"}})
 class KeyRotation(unittest.TestCase):
     def setUp(self):
         llm._KEY_STATE["i"] = 0
+        llm._KEY_STATE["pinned"] = None
         llm._COOLDOWN.clear()
         self.cfg = config.load()
         self.cfg["llm"].update(provider="gemini", gemini_model="m-main", gemini_fallback_model="m-fb")
@@ -67,6 +68,35 @@ class KeyRotation(unittest.TestCase):
             llm._KEY_STATE["i"] = 1               # K2 থেকে শুরু: K2 ✗ → K3 ✗ → K1 (গোল ঘুরে) ✓
             self._run(fake)
             self.assertEqual(used, ["K2", "K3", "K1"])
+
+
+    def test_pinned_video_uses_only_its_assigned_key(self):
+        used = []
+
+        def fake(url, **kw):
+            used.append(url.split("key=")[1])
+            return GOOD if url.endswith("key=K2") else QUOTA
+
+        with self._env(GEMINI_API_KEY="K1", GEMINI_API_KEY_2="K2"):
+            self.assertEqual(llm.pin_gemini_key(1), 1)
+            self.assertEqual(self._run(fake), "ok")
+        self.assertEqual(used, ["K2"])
+        llm.unpin_gemini_key()
+
+    def test_pinned_video_does_not_fall_over_to_another_key(self):
+        used = []
+
+        def fake(url, **kw):
+            used.append(url.split("key=")[1])
+            return QUOTA if url.endswith("key=K1") else GOOD
+
+        with self._env(GEMINI_API_KEY="K1", GEMINI_API_KEY_2="K2"):
+            llm.pin_gemini_key(0)
+            with self.assertRaises(llm.LLMError):
+                self._run(fake)
+        self.assertTrue(used)
+        self.assertEqual(set(used), {"K1"})  # মূল ও fallback মডেল—দুটিই একই নির্ধারিত key
+        llm.unpin_gemini_key()
 
     def test_all_keys_exhausted_then_fallback_model(self):
         urls = []

@@ -129,8 +129,9 @@ class Freshness(unittest.TestCase):
                 runner.refill(cfg, st, 2)
             evergreen = {c["id"] for c in cfg["categories"] if c.get("evergreen", True)}
             self.assertTrue(calls)
-            self.assertFalse(set(calls) & evergreen, "প্রথমে শুধু টাটকা-থাকা-দরকার ক্যাটাগরি")
-            self.assertLessEqual(len(calls), 3)
+            self.assertEqual(calls[0], "trending", "সংবাদ-আইডিয়া প্রথমে এবং শুধু trending থেকে")
+            self.assertTrue(set(calls[1:]) & evergreen, "বাকি ভিডিও নানা evergreen ক্যাটাগরি থেকে আসবে")
+            self.assertLessEqual(len([x for x in calls if x == "trending"]), 1)
 
     def test_refill_skips_trending_search_when_fresh_enough(self):
         cfg = _cfg()
@@ -171,7 +172,7 @@ class ConfigSanity(unittest.TestCase):
         cfg = config.load()
         self.assertEqual(cfg["video"]["style"], "subtitles")
         self.assertEqual(cfg["limits"]["monthly_max"], 300)  # দিনে ১০ × ৩০
-        self.assertEqual(len(cfg["upload"]["slots"]), 2)
+        self.assertEqual(len(cfg["upload"]["slots"]), 10)
         self.assertTrue(cfg["research"]["enabled"] and not cfg["research"]["verify"])  # verify টোকেন বাঁচাতে বন্ধ
         genders = {v["gender"] for v in cfg["tts"]["voices"]}
         self.assertEqual(genders, {"female", "male"})

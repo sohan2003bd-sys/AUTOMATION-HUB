@@ -16,8 +16,8 @@ SAFETY = (
 )
 
 SYSTEM = (
-    "তুমি বাংলাদেশি দর্শকদের জন্য YouTube Shorts-এর আইডিয়া-সম্পাদক। প্রতিটি আইডিয়া হবে এখন সত্যিই আলোচিত বা "
-    "মানুষের জানা দরকার এমন বিষয়, নির্দিষ্ট ও একে অন্যের থেকে স্পষ্ট আলাদা। " + SAFETY +
+    "তুমি বাংলাদেশি দর্শকদের জন্য YouTube Shorts-এর আইডিয়া-সম্পাদক। প্রতিটি আইডিয়া হবে তথ্যসমৃদ্ধ, কাজে লাগার মতো, "
+    "নির্দিষ্ট এবং আগের বিষয়গুলো থেকে স্পষ্ট আলাদা। একই খবরকে নতুন শব্দে আবার পরিবেশন করবে না। " + SAFETY +
     " উত্তর কেবল JSON অ্যারে (বাংলা স্ট্রিংয়ের তালিকা), অন্য কিছু নয়।"
 )
 
@@ -33,7 +33,10 @@ def today(cfg):
 
 
 def _avoid(store, cat):
-    return "\n".join(f"- {t}" for t in store.topics(cat["id"], 60)) or "(এখনো কিছু নেই)"
+    """সব ক্যাটাগরির সাম্প্রতিক বিষয় দেখায়, যাতে একই ঘটনা অন্য নামে ফিরে না আসে।"""
+    rows = getattr(store, "rows", [])[-100:]
+    items = [f"- [{r.get('category', 'other')}] {r.get('topic', '')}" for r in rows if r.get("topic")]
+    return "\n".join(items) or "(এখনো কিছু নেই)"
 
 
 def _trending(cfg, store, cat, count):
@@ -52,11 +55,17 @@ def _trending(cfg, store, cat, count):
 
 
 def _plain(cfg, store, cat, count):
+    evergreen = cat.get("evergreen", True)
+    scope = (
+        "সময়-নিরপেক্ষ, দীর্ঘদিন প্রাসঙ্গিক শিক্ষামূলক/ব্যবহারিক বিষয় বেছে নাও। আজকের সংবাদ, চলমান ঘটনা, "
+        "বর্তমান দাম বা সাময়িক ট্রেন্ডকে নতুনভাবে সাজিয়ে দেবে না। প্রতিটি বিষয়ের আলাদা সাব-টপিক থাকতে হবে।"
+        if evergreen else
+        "শুধু নির্ভরযোগ্যভাবে যাচাইযোগ্য সাম্প্রতিক আলোচিত বিষয় বেছে নাও; শিরোনাম/সূত্র ছাড়া খবর বানাবে না।"
+    )
     user = (
         f"আজকের তারিখ: {today(cfg)}।\nক্যাটাগরি: {cat['name']}\nবিষয়ের পরিধি: {cat['hint']}\n\n"
-        f"ঠিক {count}টি আলাদা আইডিয়া দাও। প্রতিটি একটা বাক্যে, বাংলায়, এমন বিষয় যা বাংলাদেশের মানুষের মধ্যে এখন বেশি "
-        "আলোচিত বা যা সবার জানা দরকার। একই ধরনের আইডিয়া বারবার দেবে না।\n\n"
-        f"এগুলোর মতো বা কাছাকাছি দেবে না:\n{_avoid(store, cat)}\n\n"
+        f"ঠিক {count}টি আলাদা আইডিয়া দাও। প্রতিটি একটি বাক্যে, বাংলায়। {scope}\n\n"
+        f"এগুলোর মতো বা কাছাকাছি দেবে না (এই তালিকা সব ক্যাটাগরির আগের ভিডিও):\n{_avoid(store, cat)}\n\n"
         'ফরম্যাট: ["আইডিয়া ১", "আইডিয়া ২", ...]'
     )
     raw = llm.complete(cfg, SYSTEM, user, max_tokens=4000, temperature=1.0, task="ideas")
@@ -121,7 +130,9 @@ def _from_news(cfg, store, cat, count):
 def generate_for_category(cfg, store, cat, count):
     items = []
     no_search = False
-    if (cfg.get("ideas") or {}).get("trending") and cfg["llm"]["provider"] == "gemini":
+    # কেবল evergreen: false (trending) ক্যাটাগরিই সংবাদ-সার্চ করবে। অন্য ক্যাটাগরি সংবাদ-শিরোনাম ধার করবে না।
+    if not cat.get("evergreen", True) and (cfg.get("ideas") or {}).get("trending") \
+            and cfg["llm"]["provider"] == "gemini":
         try:
             items = _trending(cfg, store, cat, count)
         except llm.LLMError as e:
@@ -132,7 +143,7 @@ def generate_for_category(cfg, store, cat, count):
                 print("  ℹ গুগল-সার্চ বন্ধ — আজকের সংবাদ-শিরোনাম থেকে আইডিয়া নিচ্ছি", file=sys.stderr)
             else:
                 print(f"  ⚠ আজকের আলোচিত বিষয় খোঁজা যায়নি ({e}); সাধারণ আইডিয়ায় যাচ্ছি", file=sys.stderr)
-    if not items and (no_search or not (cfg.get("ideas") or {}).get("trending")):
+    if not cat.get("evergreen", True) and not items and (no_search or not (cfg.get("ideas") or {}).get("trending")):
         items = _from_news(cfg, store, cat, count)
     if not items:
         # সার্চ ছাড়া মডেল আজকের খবর জানে না, গুজব/ভুল বানাতে পারে — তাই টাটকা-থাকা-দরকার ক্যাটাগরি বাদ

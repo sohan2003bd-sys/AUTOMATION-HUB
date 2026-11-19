@@ -141,7 +141,7 @@ def _gemini(llm_cfg, model, key, system, user, max_tokens, temperature, retries)
 KEY_NAMES = ["GEMINI_API_KEY"] + [f"GEMINI_API_KEY_{n}" for n in range(2, 11)]
 DAILY_COOLDOWN = 6 * 3600  # দৈনিক কোটা শেষ হলে এই রানে ওই (মডেল, কী) আর ছোঁয়া হয় না
 KEY_COOLDOWN = 90  # সেকেন্ড: কোটা-শেষ কী এতক্ষণ বাদ থাকে, তারপর আবার চেষ্টা (মিনিটের সীমা হলে ফিরে আসে)
-_KEY_STATE = {"i": 0}
+_KEY_STATE = {"i": 0, "pinned": None}
 _COOLDOWN = {}  # (মডেল, কী-নম্বর, সার্চসহ?) -> কখন পর্যন্ত বাদ
 _GROUND = {"down": False}  # গুগল-সার্চ (গ্রাউন্ডিং) এই রানে পাওয়া যাচ্ছে না
 
@@ -163,21 +163,38 @@ def _gemini_key():
     if not keys:
         raise LLMError(
             "GEMINI_API_KEY নেই। GitHub রিপোর Settings → Secrets and variables → Actions-এ "
-            "GEMINI_API_KEY নামে কী যোগ করুন (aistudio.google.com/apikey থেকে ফ্রি কী পাবেন; "
-            "বাড়তি কী GEMINI_API_KEY_2 … GEMINI_API_KEY_5 নামে দিন)",
+            "GEMINI_API_KEY নামে কী যোগ করুন (বাড়তি কী GEMINI_API_KEY_2 … GEMINI_API_KEY_10 নামেও যোগ করতে পারেন)",
             fatal=True, kind="key")
     return keys[0]
 
 
+def pin_gemini_key(index):
+    """একটি ভিডিওর সব Gemini অনুরোধকে একই key-তে স্থির করে। index হলো ০-ভিত্তিক।"""
+    keys = gemini_keys()
+    if not keys:
+        _KEY_STATE["pinned"] = None
+        return None
+    chosen = int(index) % len(keys)
+    _KEY_STATE["pinned"] = chosen
+    _KEY_STATE["i"] = chosen
+    return chosen
+
+
+def unpin_gemini_key():
+    """ভিডিও শেষ হলে পুরোনো round-robin আচরণে ফেরে (স্থানীয়/পরবর্তী কাজের জন্য)।"""
+    _KEY_STATE["pinned"] = None
+
+
 def _post_rotating(model, body, retries, timeout):
-    """কী ঘুরিয়ে ঘুরিয়ে অনুরোধ পাঠায়। কোটা শেষ (429) বা কী ভুল হলে পরের কী; অন্য ত্রুটি সোজা উপরে যায়।"""
+    """সাধারণ মোডে কী ঘোরায়; pinned মোডে একটি ভিডিওর জন্য নির্দিষ্ট একটি key-ই ব্যবহার করে।"""
     _gemini_key()  # কোনো কী না থাকলে এখানেই পরিষ্কার ত্রুটি
     keys = gemini_keys()
     n = len(keys)
-    start = _KEY_STATE["i"] % n
+    pinned = _KEY_STATE.get("pinned")
+    start = (pinned if pinned is not None else _KEY_STATE["i"]) % n
+    indices = [start] if pinned is not None else [(start + step) % n for step in range(n)]
     last = None
-    for step in range(n):
-        idx = (start + step) % n
+    for idx in indices:
         ck = (model, idx, bool(body.get("tools")))  # গুগল-সার্চসহ আর সাধারণ অনুরোধের কোটা আলাদা
         until = _COOLDOWN.get(ck, 0)
         if time.time() < until:
@@ -193,17 +210,23 @@ def _post_rotating(model, body, retries, timeout):
                 raise
             last = e
             _COOLDOWN[ck] = time.time() + (DAILY_COOLDOWN if e.daily else KEY_COOLDOWN)
-            if n > 1:
+            if n > 1 and pinned is None:
                 why = "কোটা শেষ" if e.kind == "quota" else "কী কাজ করছে না"
                 nxt = (idx + 1) % n + 1
                 reason = str(e).split("[", 1)[-1].rstrip("]")[:200] if "[" in str(e) else ""
                 print(f"  ⚠ Gemini কী নং {idx + 1}: {why} ({model}); কী নং {nxt} দিয়ে চেষ্টা করছি"
                       + (f"\n     কারণ: {reason}" if reason else ""), file=sys.stderr)
-    if last is None:  # সব কী এখন বিশ্রামে
+    if last is None:  # নির্ধারিত কী/সব কী এখন বিশ্রামে
+        if pinned is not None:
+            raise LLMError(f"এই ভিডিওর জন্য নির্ধারিত Gemini key নং {pinned + 1} বর্তমানে কোটা/কুলডাউনে আছে",
+                           fatal=True, kind="quota")
         raise LLMError(f"ফ্রি কোটা বা রেট লিমিট শেষ (সব {n}টি কী-ই এই মডেলে ব্যস্ত)। কিছুক্ষণ পরে আবার চালান",
                        fatal=True, kind="quota")
-    if n > 1:
+    if n > 1 and pinned is None:
         last = LLMError(f"সব {n}টি Gemini কী-তেই সমস্যা: {last}", fatal=last.fatal, kind=last.kind, daily=last.daily)
+    elif pinned is not None:
+        last = LLMError(f"ভিডিওর জন্য নির্ধারিত Gemini key নং {pinned + 1} ব্যর্থ: {last}",
+                        fatal=last.fatal, kind=last.kind, daily=last.daily)
     raise last
 
 

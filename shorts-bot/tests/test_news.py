@@ -64,7 +64,7 @@ class News(unittest.TestCase):
     def test_ideas_use_headlines_when_search_off(self):
         cfg = _cfg()
         cfg["ideas"]["trending"] = True
-        cat = config.category(cfg, "money")
+        cat = config.category(cfg, "trending")
         with tempfile.TemporaryDirectory() as d:
             st = Store(Path(d) / "q.jsonl")
             with mock.patch.object(news, "fetch", return_value=news.parse(RSS) + [{"title": "আরেকটা বড় শিরোনাম এখানে", "source": "s", "date": ""}]), \
@@ -106,7 +106,7 @@ class Stored(unittest.TestCase):
     def test_ideas_keep_their_source_headlines(self):
         cfg = _cfg()
         cfg["ideas"]["trending"] = True
-        cat = config.category(cfg, "money")
+        cat = config.category(cfg, "trending")
         heads = news.parse(RSS) + [{"title": "আরেকটা বড় শিরোনাম এখানে", "source": "ঢাকা ট্রিবিউন", "date": "16 Nov"}]
         reply = '[{"idea": "ডলারের নতুন দাম কী বলছে", "src": [1, 3]}, {"idea": "ব্যাংকের সুদের হার বদলের মানে", "src": [2]}]'
         with tempfile.TemporaryDirectory() as d:
@@ -186,7 +186,7 @@ class Unsourced(unittest.TestCase):
 
     def test_missing_src_matched_by_words_and_unmatched_news_idea_dropped(self):
         cfg = _cfg()
-        cat = config.category(cfg, "money")
+        cat = config.category(cfg, "trending")
         heads = news.parse(RSS) + [{"title": "আরেকটা বড় শিরোনাম এখানে", "source": "s", "date": ""}]
         reply = ('[{"idea": "ডলারের দাম বাড়ল ৩ টাকা, কী করবেন", "src": ["শিরোনাম ১"]}, '
                  '{"idea": "একদম অপ্রাসঙ্গিক কিছু কথা এখানে", "src": []}]')

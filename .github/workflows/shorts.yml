@@ -2,12 +2,9 @@ name: shorts-daily
 
 on:
   schedule:
-    # প্রতিটি ২ ঘণ্টার ব্লকে (UTC ০০-০২, ০২-০৪, …, ১৮-২০ = বাংলাদেশ সকাল ০৬ থেকে ভোর ০২) একটি করে ভিডিও = দিনে ১০টি।
-    # GitHub-এর শিডিউল প্রায়ই দেরি করে বা মাঝে মাঝে বাদ দেয়, তাই প্রতি ব্লকে ৩ বার "দরজা ঠকঠক" করা হয়।
-    # নিচের "গেট" ধাপ ঠিক করে সত্যিই ভিডিও বানাবে কি না — ব্লকে ভিডিও হয়ে গেলে বাকি ঠকঠক নিজে থেকে বাদ যায়।
-    - cron: "7 0-19/2 * * *"    # ব্লকের শুরু (জোড় UTC ঘণ্টা, :০৭)
-    - cron: "47 0-19/2 * * *"   # একই ব্লকে দ্বিতীয় চেষ্টা (:৪৭)
-    - cron: "27 1-19/2 * * *"   # ব্লকের দ্বিতীয় ঘণ্টায় শেষ চেষ্টা (বিজোড় UTC ঘণ্টা, :২৭)
+    # বাংলাদেশ সময়ে প্রতি ২ ঘণ্টায় একটি ভিডিও। তিনটি ট্রিগার GitHub-এর বিলম্ব/মিসড রান সামলাতে retry window দেয়।
+    # GitHub scheduled workflow best-effort; প্রকাশের নির্দিষ্ট সময় YouTube-এ schedule করা হয়।
+    - cron: "0,10,20 0-18/2 * * *"
   workflow_dispatch:
     inputs:
       count:
@@ -71,8 +68,11 @@ jobs:
                   sf.write(("### ✅ " if go else "### ⏭️ ") + msg + "\n")
           except OSError:
               pass
+          # UTC দুই-ঘণ্টার ব্লক অনুযায়ী ১..১০ নম্বর API key slot।
+          key_slot = (now.hour // 2) % 10 + 1
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write("go=" + ("true" if go else "false") + "\n")
+              f.write("key_slot=" + str(key_slot) + "\n")
           PY
 
       - if: steps.gate.outputs.go == 'true'
@@ -98,6 +98,11 @@ jobs:
           GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
           GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
           GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY_5 }}
+          GEMINI_API_KEY_6: ${{ secrets.GEMINI_API_KEY_6 }}
+          GEMINI_API_KEY_7: ${{ secrets.GEMINI_API_KEY_7 }}
+          GEMINI_API_KEY_8: ${{ secrets.GEMINI_API_KEY_8 }}
+          GEMINI_API_KEY_9: ${{ secrets.GEMINI_API_KEY_9 }}
+          GEMINI_API_KEY_10: ${{ secrets.GEMINI_API_KEY_10 }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
@@ -119,6 +124,12 @@ jobs:
           GEMINI_API_KEY_3: ${{ secrets.GEMINI_API_KEY_3 }}
           GEMINI_API_KEY_4: ${{ secrets.GEMINI_API_KEY_4 }}
           GEMINI_API_KEY_5: ${{ secrets.GEMINI_API_KEY_5 }}
+          GEMINI_API_KEY_6: ${{ secrets.GEMINI_API_KEY_6 }}
+          GEMINI_API_KEY_7: ${{ secrets.GEMINI_API_KEY_7 }}
+          GEMINI_API_KEY_8: ${{ secrets.GEMINI_API_KEY_8 }}
+          GEMINI_API_KEY_9: ${{ secrets.GEMINI_API_KEY_9 }}
+          GEMINI_API_KEY_10: ${{ secrets.GEMINI_API_KEY_10 }}
+          GEMINI_KEY_SLOT: ${{ steps.gate.outputs.key_slot }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}

@@ -60,7 +60,7 @@ def _doctor(cfg) -> int:
     if prov == "gemini":
         from shorts import llm as _llm
         nkeys = len(_llm.gemini_keys())
-        line(nkeys > 0, f"{keyname} (llm.provider: {prov}) — মোট {nkeys}টি Gemini কী পাওয়া গেছে")
+        line(nkeys == 10, f"{keyname} (llm.provider: {prov}) — ১০টি স্বতন্ত্র key দরকার, পাওয়া গেছে {nkeys}টি")
     else:
         line(bool(os.environ.get(keyname, "").strip()), f"{keyname} (llm.provider: {prov})")
     if (cfg.get("research") or {}).get("enabled") and prov != "gemini":
