@@ -1,0 +1,76 @@
+{
+  "title": "রপ্তানি লেনদেনে সাইবার জালিয়াতি থেকে সাবধান",
+  "description": "বাংলাদেশ ব্যাংকের জরুরি সতর্কবার্তা অনুযায়ী রপ্তানি লেনদেনে সাইবার জালিয়াতি প্রতিরোধে কিছু গুরুত্বপূর্ণ করণীয় জেনে নিন। ব্যবসায়িক সুরক্ষায় সচেতন হোন।",
+  "tags": [
+    "Bangladesh Bank",
+    "Cyber Fraud",
+    "Export Security",
+    "Cyber Crime Alert",
+    "Business Safety",
+    "বাংলাদেশ ব্যাংক",
+    "সাইবার জালিয়াতি",
+    "রপ্তানি সুরক্ষা",
+    "সতর্কবার্তা"
+  ],
+  "tone": "urgent",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "রপ্তানি বাণিজ্যে আপনার বড় অঙ্কের টাকা মুহূর্তেই উধাও হয়ে যেতে পারে জানেন কি?",
+      "screen_text": "রপ্তানি বাণিজ্যে আপনার বড় অঙ্কের টাকা মুহূর্তেই",
+      "highlight": "",
+      "visual_query": "dark office computer screen glowing"
+    },
+    {
+      "kind": "step",
+      "narration": "সম্প্রতি রপ্তানি লেনদেনে সাইবার জালিয়াতি প্রতিরোধে জরুরি সতর্কতা জারি করেছে বাংলাদেশ ব্যাংক।",
+      "screen_text": "সম্প্রতি রপ্তানি লেনদেনে সাইবার জালিয়াতি প্রতিরোধে জরুরি",
+      "highlight": "",
+      "visual_query": "modern corporate building exterior wide shot"
+    },
+    {
+      "kind": "step",
+      "narration": "অনলাইন বাণিজ্যে হ্যাকাররা বিভিন্ন কৌশলে তথ্য চুরি করে বড় ধরনের আর্থিক ক্ষতি ঘটাচ্ছে।",
+      "screen_text": "অনলাইন বাণিজ্যে হ্যাকাররা বিভিন্ন কৌশলে তথ্য চুরি",
+      "highlight": "",
+      "visual_query": "close up server rack blinking lights"
+    },
+    {
+      "kind": "tip",
+      "narration": "এক, লেনদেনের সময় ইমেইল অ্যাড্রেস ও ডোমেইন নাম ভালোভাবে যাচাই করুন।",
+      "screen_text": "এক, লেনদেনের সময় ইমেইল অ্যাড্রেস ও ডোমেইন",
+      "highlight": "",
+      "visual_query": "wooden desk with stack of papers"
+    },
+    {
+      "kind": "tip",
+      "narration": "দুই, ব্যাংক অ্যাকাউন্ট সংক্রান্ত কোনো পরিবর্তন আসলে সরাসরি ফোনে বা অফিসে নিশ্চিত হোন।",
+      "screen_text": "দুই, ব্যাংক অ্যাকাউন্ট সংক্রান্ত কোনো পরিবর্তন আসলে",
+      "highlight": "",
+      "visual_query": "vintage telephone on wooden table"
+    },
+    {
+      "kind": "tip",
+      "narration": "তিন, সাইবার নিরাপত্তা জোরদার করতে আইটি বিশেষজ্ঞদের পরামর্শ নিয়ে কাজ করুন।",
+      "screen_text": "তিন, সাইবার নিরাপত্তা জোরদার করতে আইটি বিশেষজ্ঞদের",
+      "highlight": "",
+      "visual_query": "server room corridor cinematic lighting"
+    },
+    {
+      "kind": "outro",
+      "narration": "সঠিক সতর্কতা আর নিয়ম মেনে চললেই রপ্তানি লেনদেন থাকবে সম্পূর্ণ সুরক্ষিত।",
+      "screen_text": "সঠিক সতর্কতা আর নিয়ম মেনে চললেই রপ্তানি",
+      "highlight": "",
+      "visual_query": "city skyline at sunset wide shot"
+    }
+  ],
+  "sources": [
+    "Channel 24",
+    "কালের কণ্ঠ"
+  ],
+  "facts": [
+    "রপ্তানি লেনদেনে সাইবার জালিয়াতি প্রতিরোধে জরুরি সতর্কতা (সূত্র: Channel 24, Thu, 19 Nov 2026)",
+    "রপ্তানি লেনদেনে সাইবার প্রতারণা ঠেকাতে সতর্ক করল বাংলাদেশ ব্যাংক (সূত্র: কালের কণ্ঠ, Thu, 19 Nov 2026)"
+  ],
+  "fact_check": []
+}
