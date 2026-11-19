@@ -1,0 +1,62 @@
+{
+  "title": "বিয়ে বাড়িতে সোনা কেনায় কি স্বস্তি মিলল?",
+  "description": "বিয়ে বা উৎসবের মরসুমে সোনার দামের ওঠানামা সবার চিন্তার কারণ। বর্তমান বাজারে সোনা আর রুপোর দামের পরিস্থিতি এবং ক্রেতাদের জন্য তা কতটা স্বস্তির, তা জেনে নিন এই ভিডিওতে।",
+  "tags": [
+    "সোনা",
+    "GoldPrice",
+    "BangladeshEconomy",
+    "GoldRate",
+    "বাজারদর",
+    "WeddingSeason",
+    "স্বর্ণ",
+    "MoneyTips",
+    "ShoppingTips",
+    "BanglaShorts",
+    "EconomyNews"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "বিয়ে বা ঘরোয়া অনুষ্ঠান—সোনা কি এই মরসুমে আপনার বাজেট থেকে বড় অঙ্ক গিলে খাচ্ছে?",
+      "screen_text": "বিয়ে বা ঘরোয়া অনুষ্ঠান—সোনা কি এই মরসুমে",
+      "highlight": "",
+      "visual_query": "luxurious jewelry box on velvet"
+    },
+    {
+      "kind": "step",
+      "narration": "খবরটা হলো, বিয়ের মরসুমের মাঝেই সোনার দাম কিছুটা কমেছে। রুপোর দামও ১৯ শতকের সেই সর্বোচ্চ দরের নিচেই আটকে আছে।",
+      "screen_text": "খবরটা হলো, বিয়ের মরসুমের মাঝেই সোনার দাম",
+      "highlight": "",
+      "visual_query": "traditional gold ornaments on display"
+    },
+    {
+      "kind": "step",
+      "narration": "এই দামের সামান্য পতন সাধারণ ক্রেতাদের জন্য অবশ্যই কিছুটা স্বস্তির খবর।",
+      "screen_text": "এই দামের সামান্য পতন সাধারণ ক্রেতাদের জন্য",
+      "highlight": "",
+      "visual_query": "open cash register drawer"
+    },
+    {
+      "kind": "tip",
+      "narration": "তবে যেকোনো বড় কেনাকাটার আগে নিজের বাজেট যাচাই করে নিন এবং বিশ্বস্ত দোকান থেকেই সোনা কিনুন।",
+      "screen_text": "তবে যেকোনো বড় কেনাকাটার আগে নিজের বাজেট",
+      "highlight": "",
+      "visual_query": "golden weighing scale on table"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের খবর রাখুন, বুঝেশুনে খরচ করুন।",
+      "screen_text": "বাজারের খবর রাখুন, বুঝেশুনে খরচ করুন।",
+      "highlight": "",
+      "visual_query": "sunlight falling on table"
+    }
+  ],
+  "sources": [
+    "Anandabazar Patrika"
+  ],
+  "facts": [
+    "১৯৮০ সালের সর্বোচ্চ দামের নীচেই রুপোর লেনদেন! আরও সস্তা সোনা, বিয়ের মরসুমে কিছুটা স্বস্তি ক্রেতাদের (সূত্র: Anandabazar Patrika, Wed, 18 Nov 2026)"
+  ],
+  "fact_check": []
+}
