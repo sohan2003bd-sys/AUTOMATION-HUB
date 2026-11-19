@@ -179,8 +179,7 @@ def _background(W, H, accent):
 # ======================================================================
 #  ধাপ ৩: স্তরভিত্তিক (layered) রেন্ডার — আসল ফুটেজ/ছবি + অ্যানিমেটেড লেখা + ক্যাপশন + ট্রানজিশন
 # ======================================================================
-TRANSITIONS = ["fade", "slideleft", "slideup", "wipeleft", "smoothleft", "smoothup", "circleopen", "zoomin",
-               "radial", "dissolve"]
+TRANSITIONS = ["fade", "slideleft", "slideup", "wipeleft", "smoothleft", "smoothup", "zoomin", "dissolve"]
 # প্রতি ভিডিওর আলাদা "লুক" — ফুটেজের রঙের ছোঁয়া, ভিগনেট ও হালকা ফিল্ম-গ্রেইন। স্টক ফুটেজ এতে ক্যামেরার আসল ছবির মতো
 # একরকম টোনে বসে যায় এবং প্রতিটি ভিডিও আলাদা দেখায়। (ffmpeg ফিল্টার: eq, colorbalance, vignette, noise)
 LOOKS = {
@@ -480,8 +479,17 @@ def render_scene(cfg, cat, script, i, step_no, voice_dur, clip_len, media, workd
     # --- পটভূমি ---
     if media and media["type"] == "video":
         inputs += ["-stream_loop", "-1", "-t", f"{clip_len:.3f}", "-i", str(media["path"])]
-        filt.append(f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={fps},setsar=1,"
-                    f"{lf},format=yuv420p[bg]")
+        if cfg["video"].get("motion", "cinematic") in ("cinematic", "zoom", "pan"):
+            # ৮% overscan থেকে খুব হালকা চলমান crop: স্টক ভিডিওও স্থির/স্লাইডশোর মতো লাগে না।
+            sw, sh = int(round(W * 1.08)), int(round(H * 1.08))
+            phase = (i % 5) * 0.7
+            crop_x = f"(iw-ow)/2+0.015*ow*sin(t*0.35+{phase:.2f})"
+            crop_y = f"(ih-oh)/2+0.012*oh*cos(t*0.27+{phase:.2f})"
+            filt.append(f"[0:v]scale={sw}:{sh}:force_original_aspect_ratio=increase,"
+                        f"crop={W}:{H}:x='{crop_x}':y='{crop_y}',fps={fps},setsar=1,{lf},format=yuv420p[bg]")
+        else:
+            filt.append(f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={fps},setsar=1,"
+                        f"{lf},format=yuv420p[bg]")
     else:
         if media:   # ছবি
             src = media["path"]
