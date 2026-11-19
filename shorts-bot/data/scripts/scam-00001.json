@@ -1,0 +1,61 @@
+{
+  "title": "এক সপ্তাহে চার প্রযুক্তি বিভ্রাট: সাইবার সতর্কতা",
+  "description": "এক সপ্তাহে চারটি বড় প্রযুক্তি বিভ্রাট এবং ভালনপোক্যালিপস নিয়ে সাইবার বিশেষজ্ঞদের সাম্প্রতিক সতর্কতা নিয়ে জেনে নিন। প্রযুক্তি ব্যবহারে সচেতন থাকুন।",
+  "tags": [
+    "tech blackout",
+    "cybersecurity",
+    "technology",
+    "সাইবার নিরাপত্তা",
+    "প্রযুক্তি বিভ্রাট",
+    "tech news",
+    "digital safety",
+    "সতর্কতা",
+    "cyber alert",
+    "tech update"
+  ],
+  "tone": "urgent",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "এক সপ্তাহে চারটে বড় প্রযুক্তি বিভ্রাট! কিন্তু আসল কথা হলো, এটা কোনো সাধারণ সমস্যা নয়।",
+      "screen_text": "এক সপ্তাহে চারটে বড় প্রযুক্তি বিভ্রাট! কিন্তু",
+      "highlight": "",
+      "visual_query": "server rack flashing lights"
+    },
+    {
+      "kind": "step",
+      "narration": "সাইবার বিশেষজ্ঞরা বলছেন, সামনে আসছে ভালনপোক্যালিপস নামক এক বড় সাইবার ঝুঁকি।",
+      "screen_text": "সাইবার বিশেষজ্ঞরা বলছেন, সামনে আসছে ভালনপোক্যালিপস নামক",
+      "highlight": "",
+      "visual_query": "digital code screen glitch"
+    },
+    {
+      "kind": "step",
+      "narration": "এর ফলে জরুরি ডিজিটাল পরিষেবা হঠাৎ বন্ধ হয়ে যেতে পারে, যা দৈনন্দিন জীবনকে প্রভাবিত করবে।",
+      "screen_text": "এর ফলে জরুরি ডিজিটাল পরিষেবা হঠাৎ বন্ধ",
+      "highlight": "",
+      "visual_query": "smartphone screen glowing dark"
+    },
+    {
+      "kind": "tip",
+      "narration": "নিয়মিত সফটওয়্যার আপডেট রাখুন এবং অফলাইন ব্যাকআপ ব্যবহারের অভ্যাস করুন।",
+      "screen_text": "নিয়মিত সফটওয়্যার আপডেট রাখুন এবং অফলাইন ব্যাকআপ",
+      "highlight": "",
+      "visual_query": "laptop keyboard close up"
+    },
+    {
+      "kind": "outro",
+      "narration": "প্রযুক্তির ওপর অতিরিক্ত নির্ভরতা কমানোই এখন সবচেয়ে বড় নিরাপত্তা।",
+      "screen_text": "প্রযুক্তির ওপর অতিরিক্ত নির্ভরতা কমানোই এখন সবচেয়ে",
+      "highlight": "",
+      "visual_query": "empty office desk night"
+    }
+  ],
+  "sources": [
+    "Anandabazar Patrika"
+  ],
+  "facts": [
+    "এক সপ্তাহে ৪টি বড় প্রযুক্তি বিভ্রাট, ‘ভালনপোক্যালিপস’ আসন্ন! সতর্কবার্তা সাইবার বিশেষজ্ঞের (সূত্র: Anandabazar Patrika, Thu, 19 Nov 2026)"
+  ],
+  "fact_check": []
+}
