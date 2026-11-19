@@ -75,19 +75,20 @@ jobs:
               f.write("key_slot=" + str(key_slot) + "\n")
           PY
 
+      # Docker image-এর apt ও pip layer GitHub Actions cache-এ রাখা হবে।
       - if: steps.gate.outputs.go == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: shorts-bot/requirements.txt
+        uses: docker/setup-buildx-action@v3
 
-      - name: FFmpeg ও বাংলা ফন্ট
+      - name: Docker image তৈরি (cached tools + Python packages)
         if: steps.gate.outputs.go == 'true'
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-core libraqm0 libfribidi0
-
-      - if: steps.gate.outputs.go == 'true'
-        run: pip install -r requirements.txt
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          tags: shorts-bot:ci
+          load: true
+          cache-from: type=gha,scope=shorts-bot
+          cache-to: type=gha,mode=max,scope=shorts-bot
 
       - name: সবকিছু ঠিক আছে কিনা দেখো (doctor)
         if: steps.gate.outputs.go == 'true'
@@ -110,7 +111,8 @@ jobs:
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
-        run: python -m shorts doctor
+        run: |
+          docker run --rm -v "$PWD:/app" -w /app --env GEMINI_API_KEY --env GEMINI_API_KEY_2 --env GEMINI_API_KEY_3 --env GEMINI_API_KEY_4 --env GEMINI_API_KEY_5 --env GEMINI_API_KEY_6 --env GEMINI_API_KEY_7 --env GEMINI_API_KEY_8 --env GEMINI_API_KEY_9 --env GEMINI_API_KEY_10 --env ANTHROPIC_API_KEY --env PEXELS_API_KEY --env PIXABAY_API_KEY --env UNSPLASH_ACCESS_KEY --env YT_CLIENT_ID --env YT_CLIENT_SECRET --env YT_REFRESH_TOKEN shorts-bot:ci python -m shorts doctor
 
       - name: ভিডিও বানাও ও আপলোড করো
         if: steps.gate.outputs.go == 'true'
@@ -138,7 +140,7 @@ jobs:
         run: |
           ARGS=""
           if [ "$PRIVACY" != "config" ]; then ARGS="--privacy $PRIVACY"; fi
-          python -m shorts run --count "$COUNT" $ARGS
+          docker run --rm -v "$PWD:/app" -w /app --env GEMINI_API_KEY --env GEMINI_API_KEY_2 --env GEMINI_API_KEY_3 --env GEMINI_API_KEY_4 --env GEMINI_API_KEY_5 --env GEMINI_API_KEY_6 --env GEMINI_API_KEY_7 --env GEMINI_API_KEY_8 --env GEMINI_API_KEY_9 --env GEMINI_API_KEY_10 --env ANTHROPIC_API_KEY --env PEXELS_API_KEY --env PIXABAY_API_KEY --env UNSPLASH_ACCESS_KEY --env YT_CLIENT_ID --env YT_CLIENT_SECRET --env YT_REFRESH_TOKEN --env COUNT --env PRIVACY shorts-bot:ci python -m shorts run --count "$COUNT" $ARGS
 
       - name: অবস্থা সেভ করো (queue ও স্ক্রিপ্ট)
         if: always() && steps.gate.outputs.go == 'true'
