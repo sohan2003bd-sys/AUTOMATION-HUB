@@ -1,0 +1,63 @@
+{
+  "title": "সোনার বাজারে স্বস্তি, টানা ছয় দফায় কমল দাম",
+  "description": "দেশের বাজারে টানা ছয় দফায় কমেছে সোনার দাম। নভেম্বর মাসে ভরিতে ১৪ হাজার ২৮৮ টাকা কমেছে। বর্তমান বাজার পরিস্থিতি ও সাধারণ সচেতনতা নিয়ে জেনে নিন।",
+  "tags": [
+    "সোনার দাম",
+    "gold price bangladesh",
+    "money market",
+    "টাকা পয়সা",
+    "economic news",
+    "সোনা",
+    "gold rate",
+    "বাজারদর",
+    "business news",
+    "bangla news"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "নভেম্বর মাসে দেশের বাজারে সোনার দাম কমেছে ভরিতে চৌদ্দ হাজার দুইশো আটাশি টাকা।",
+      "screen_text": "নভেম্বর মাসে দেশের বাজারে সোনার দাম কমেছে",
+      "highlight": "",
+      "visual_query": "gold bullion stack"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রথম আলোর তথ্য অনুযায়ী, টানা ছয় দফায় এই দাম কমেছে।",
+      "screen_text": "প্রথম আলোর তথ্য অনুযায়ী, টানা ছয় দফায়",
+      "highlight": "",
+      "visual_query": "daily newspaper folded"
+    },
+    {
+      "kind": "step",
+      "narration": "বাজারের এই ধারাবাহিক পতন সোনা ক্রেতাদের জন্য স্বস্তির খবর নিয়ে এসেছে।",
+      "screen_text": "বাজারের এই ধারাবাহিক পতন সোনা ক্রেতাদের জন্য",
+      "highlight": "",
+      "visual_query": "empty jewelry showcase"
+    },
+    {
+      "kind": "tip",
+      "narration": "যেকোনো বড় কেনাকাটার আগে বর্তমান বাজার দর ও সরকারি বা বাজুসের আপডেট নিয়মিত যাচাই করুন।",
+      "screen_text": "যেকোনো বড় কেনাকাটার আগে বর্তমান বাজার দর",
+      "highlight": "",
+      "visual_query": "smartphone on wooden desk"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের সঠিক তথ্য জেনে বুঝে সিদ্ধান্ত নিন।",
+      "screen_text": "বাজারের সঠিক তথ্য জেনে বুঝে সিদ্ধান্ত নিন।",
+      "highlight": "",
+      "visual_query": "calculator on glass table"
+    }
+  ],
+  "sources": [
+    "প্রথম আলো",
+    "Bd24live"
+  ],
+  "facts": [
+    "নভেম্বর মাসে সোনার দাম কমল ভরিতে ১৪ হাজার ২৮৮ টাকা (সূত্র: প্রথম আলো, Wed, 18 Nov 2026)",
+    "টানা ছয় দফায় সোনার দাম কমল ১৪ হাজার ২৮৯ টাকা (সূত্র: Bd24live, Wed, 18 Nov 2026)"
+  ],
+  "fact_check": []
+}
