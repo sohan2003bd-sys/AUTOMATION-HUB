@@ -1,0 +1,61 @@
+{
+  "title": "ভুয়া স্কুলের সাইনবোর্ডে জমি দখল থেকে সাবধান",
+  "description": "সমবায় ভূমি দখল ও ভুয়া স্কুলের সাইনবোর্ড ঝুলিয়ে চাঁদাবাজির নানা ফাঁদ নিয়ে সচেতন হোন। জমি কেনার আগে সঠিক কাগজ ও সরকারি নিয়ম যাচাই করুন।",
+  "tags": [
+    "জমি দখল",
+    "প্রতারণা",
+    "সতর্কতা",
+    "ভুয়া স্কুল",
+    "ভূমি প্রতারণা",
+    "আইনি সচেতনতা",
+    "Land Fraud",
+    "Bangladesh",
+    "Awareness",
+    "Shomoyer Alo"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "হঠাৎ দেখলেন আপনার খালি জমিতে একটা স্কুলের সাইনবোর্ড ঝুলছে। কিন্তু আসল কথা হলো, এটা নতুন কোনো প্রতারণার ফাঁদ হতে পারে।",
+      "screen_text": "হঠাৎ দেখলেন আপনার খালি জমিতে একটা স্কুলের",
+      "highlight": "",
+      "visual_query": "empty plot of land with rusty signpost overhead shot"
+    },
+    {
+      "kind": "step",
+      "narration": "সাম্প্রতিক সময়ে সমবায় ভূমি দখল ও ভুয়া স্কুলের সাইনবোর্ড ব্যবহার করে চাঁদাবাজির নানা অভিযোগ সামনে আসছে।",
+      "screen_text": "সাম্প্রতিক সময়ে সমবায় ভূমি দখল ও ভুয়া",
+      "highlight": "",
+      "visual_query": "old wooden signboard on abandoned roadside fence"
+    },
+    {
+      "kind": "step",
+      "narration": "এ ধরনের চক্র জমির মালিকদের ভয় দেখিয়ে অবৈধ সুবিধা আদায় করার চেষ্টা করে। এতে আপনার মূল্যবান সম্পত্তি হাতছাড়া হতে পারে।",
+      "screen_text": "এ ধরনের চক্র জমির মালিকদের ভয় দেখিয়ে",
+      "highlight": "",
+      "visual_query": "padlocked rusty iron gate close up"
+    },
+    {
+      "kind": "tip",
+      "narration": "তাই জমি বা প্লট কেনার আগে বা খালি জমি থাকলে নিয়মিত তদারকি করুন। স্থানীয় ভূমি অফিস থেকে কাগজপত্রের সত্যতা যাচাই করুন।",
+      "screen_text": "তাই জমি বা প্লট কেনার আগে বা",
+      "highlight": "",
+      "visual_query": "official land deeds and documents on wooden desk"
+    },
+    {
+      "kind": "outro",
+      "narration": "সজাগ থাকুন, নিজের জমির আইনি সুরক্ষা নিশ্চিত করুন।",
+      "screen_text": "সজাগ থাকুন, নিজের জমির আইনি সুরক্ষা নিশ্চিত",
+      "highlight": "",
+      "visual_query": "metal keys resting on legal papers slow pan"
+    }
+  ],
+  "sources": [
+    "Shomoyer Alo"
+  ],
+  "facts": [
+    "সমবায় ভূমি দখল ও ‘ভুয়া স্কুলের’ সাইনবোর্ডে চাঁদাবাজির অভিযোগ (সূত্র: Shomoyer Alo, Thu, 19 Nov 2026)"
+  ],
+  "fact_check": []
+}
