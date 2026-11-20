@@ -1,0 +1,68 @@
+{
+  "title": "দেশের বাজারে স্বর্ণের দামে আবারও পতন",
+  "description": "দেশের বাজারে স্বর্ণের দামে আবারও পতন ঘটেছে। ভরিতে কত দাম কমেছে এবং এর পেছনের কারণ জানতে পুরো ভিডিওটি দেখুন।",
+  "tags": [
+    "স্বর্ণের দাম",
+    "গোল্ড প্রাইস বাংলাদেশ",
+    "আজকের বাজার",
+    "gold price in bd",
+    "bangla news",
+    "gold rate update",
+    "market update",
+    "economy news",
+    "business news",
+    "bd gold price"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "সোনার দাম কি সত্যিই কমেছে, নাকি এটা শুধুই গুজব?",
+      "screen_text": "সোনার দাম কি সত্যিই কমেছে, নাকি এটা",
+      "highlight": "",
+      "visual_query": "close up gold bars vault"
+    },
+    {
+      "kind": "step",
+      "narration": "অনেকেই ভাবেন গহনার দাম বুঝি কখনো কমে না। কিন্তু তথ্য বলছে উল্টো কথা।",
+      "screen_text": "অনেকেই ভাবেন গহনার দাম বুঝি কখনো কমে",
+      "highlight": "",
+      "visual_query": "old wooden jewelry box open"
+    },
+    {
+      "kind": "step",
+      "narration": "দেশের বাজারে স্বর্ণের দামে আবারও পতন ঘটেছে।",
+      "screen_text": "দেশের বাজারে স্বর্ণের দামে আবারও পতন ঘটেছে।",
+      "highlight": "",
+      "visual_query": "stock market ticker board red"
+    },
+    {
+      "kind": "step",
+      "narration": "ভরিতে দাম কিছুটা কমেছে, যা ক্রেতাদের জন্য স্বস্তির খবর।",
+      "screen_text": "ভরিতে দাম কিছুটা কমেছে, যা ক্রেতাদের জন্য",
+      "highlight": "",
+      "visual_query": "measuring scale on wooden table"
+    },
+    {
+      "kind": "tip",
+      "narration": "সোনার যেকোনো লেনদেনের আগে বর্তমান বাজার দর যাচাই করে নিন।",
+      "screen_text": "সোনার যেকোনো লেনদেনের আগে বর্তমান বাজার দর",
+      "highlight": "",
+      "visual_query": "calculator on office desk"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের সঠিক আপডেট জানুন, বুঝে শুনে সিদ্ধান্ত নিন।",
+      "screen_text": "বাজারের সঠিক আপডেট জানুন, বুঝে শুনে সিদ্ধান্ত",
+      "highlight": "",
+      "visual_query": "empty city street at dawn"
+    }
+  ],
+  "sources": [
+    "Bangla Tribune"
+  ],
+  "facts": [
+    "স্বর্ণের দামে আবারও পতন, ভরিতে কমলো কত (সূত্র: Bangla Tribune, Fri, 20 Nov 2026)"
+  ],
+  "fact_check": []
+}
