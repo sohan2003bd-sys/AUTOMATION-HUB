@@ -1,0 +1,68 @@
+{
+  "title": "দেশের বাজারে কমল স্বর্ণ ও রুপার দাম",
+  "description": "দেশের বাজারে স্বর্ণের পাশাপাশি কমেছে রুপার দামও। জেনে নিন এই দাম কমার পেছনের খবর এবং বাজারের বর্তমান পরিস্থিতি।",
+  "tags": [
+    "সোনা",
+    "রুপা",
+    "Gold price Bangladesh",
+    "Silver price",
+    "বাজারদর",
+    "অর্থনীতি",
+    "Corporate Sangbad",
+    "সোনার দাম",
+    "রুপার দাম",
+    "বাংলাদেশ সংবাদ"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "দেশের বাজারে একসঙ্গে কমেছে স্বর্ণ ও রুপার দাম।",
+      "screen_text": "দেশের বাজারে একসঙ্গে কমেছে স্বর্ণ ও রুপার",
+      "highlight": "",
+      "visual_query": "close up silver and gold bars"
+    },
+    {
+      "kind": "step",
+      "narration": "এক, কর্পোরেট সংবাদের তথ্য অনুযায়ী দেশের বাজারে স্বর্ণের পাশাপাশি রুপার দামেও পতন ঘটেছে।",
+      "screen_text": "এক, কর্পোরেট সংবাদের তথ্য অনুযায়ী দেশের বাজারে",
+      "highlight": "",
+      "visual_query": "financial newspaper on wooden desk"
+    },
+    {
+      "kind": "step",
+      "narration": "দুই, এই মূল্য হ্রাসের ফলে ক্রেতারা কিছুটা স্বস্তি পাচ্ছেন।",
+      "screen_text": "দুই, এই মূল্য হ্রাসের ফলে ক্রেতারা কিছুটা",
+      "highlight": "",
+      "visual_query": "empty jewellery shop counter top view"
+    },
+    {
+      "kind": "step",
+      "narration": "তিন, সোনা বা রুপা কেনার আগে বর্তমান বাজারদর যাচাই করে নেওয়া বুদ্ধিমানের কাজ হবে।",
+      "screen_text": "তিন, সোনা বা রুপা কেনার আগে বর্তমান",
+      "highlight": "",
+      "visual_query": "digital calculator on glass table"
+    },
+    {
+      "kind": "tip",
+      "narration": "বাজেট ঠিক করে তবেই সাধের গহনা বা ধাতু কেনা উচিত।",
+      "screen_text": "বাজেট ঠিক করে তবেই সাধের গহনা বা",
+      "highlight": "",
+      "visual_query": "minimalist modern currency notes stack"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের সঠিক আপডেট জানতে নিয়মিত বিশ্বস্ত সংবাদ মাধ্যম অনুসরণ করুন।",
+      "screen_text": "বাজারের সঠিক আপডেট জানতে নিয়মিত বিশ্বস্ত সংবাদ",
+      "highlight": "",
+      "visual_query": "slow pan of city skyline at sunset"
+    }
+  ],
+  "sources": [
+    "Corporate Sangbad"
+  ],
+  "facts": [
+    "দেশের বাজারে কমল স্বর্ণ ও রুপার দাম, ভরি কত? (সূত্র: Corporate Sangbad, Wed, 18 Nov 2026)"
+  ],
+  "fact_check": []
+}
