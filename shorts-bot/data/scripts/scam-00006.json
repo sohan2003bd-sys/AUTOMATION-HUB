@@ -1,0 +1,60 @@
+{
+  "title": "আসল রিয়ালের লোভ: যেভাবে ফাঁদ পাতা হয়",
+  "description": "কম দামে বিদেশি মুদ্রা কেনার লোভ দেখিয়ে কীভাবে প্রতারণা করা হয়, তা থেকে সাবধান থাকুন। অপরিচিত কারো কথায় অন্ধ বিশ্বাস না করে সবসময় নিয়ম মেনে চলুন।",
+  "tags": [
+    "প্রতারণা",
+    "সতর্কতা",
+    "Foreign Currency",
+    "Fraud Alert",
+    "বাংলাদেশ",
+    "সচেতনতা",
+    "Financial Safety",
+    "নিরাপত্তা",
+    "fake money scam"
+  ],
+  "tone": "urgent",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "বিদেশি মুদ্রা কম দামে পাওয়ার লোভ অনেক সময় বড় বিপদে ফেলতে পারে।",
+      "screen_text": "বিদেশি মুদ্রা কম দামে পাওয়ার লোভ অনেক",
+      "highlight": "",
+      "visual_query": "stacked currency notes on wooden table"
+    },
+    {
+      "kind": "step",
+      "narration": "সম্প্রতি আসল সৌদি রিয়ালের লোভ দেখিয়ে ভুয়া কাগজের বান্ডিল ধরিয়ে দেওয়ার অভিনব প্রতারণার অভিযোগ পাওয়া গেছে।",
+      "screen_text": "সম্প্রতি আসল সৌদি রিয়ালের লোভ দেখিয়ে ভুয়া",
+      "highlight": "",
+      "visual_query": "bundled paper cut to banknote size"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রতারকরা সাধারণত বিশ্বাসের সুযোগ নিয়ে মানুষের কষ্টের টাকা হাতিয়ে নেয়।",
+      "screen_text": "প্রতারকরা সাধারণত বিশ্বাসের সুযোগ নিয়ে মানুষের কষ্টের",
+      "highlight": "",
+      "visual_query": "empty leather wallet on desk"
+    },
+    {
+      "kind": "tip",
+      "narration": "যেকোনো বৈদেশিক মুদ্রা লেনদেনের জন্য সবসময় অনুমোদিত ব্যাংক বা এক্সচেঞ্জ হাউজ ব্যবহার করুন।",
+      "screen_text": "যেকোনো বৈদেশিক মুদ্রা লেনদেনের জন্য সবসময় অনুমোদিত",
+      "highlight": "",
+      "visual_query": "modern bank counter interior"
+    },
+    {
+      "kind": "outro",
+      "narration": "লোভের মুখে না পড়ে, প্রতিটি লেনদেনে রাখুন শতভাগ সতর্কতা।",
+      "screen_text": "লোভের মুখে না পড়ে, প্রতিটি লেনদেনে রাখুন",
+      "highlight": "",
+      "visual_query": "padlock on metal chain close up"
+    }
+  ],
+  "sources": [
+    "Bd24live"
+  ],
+  "facts": [
+    "আসল রিয়ালের লোভ দেখিয়ে ভুয়া কাগজের বান্ডিল ধরিয়ে দেওয়ার অভিযোগ (সূত্র: Bd24live, Thu, 19 Nov 2026)"
+  ],
+  "fact_check": []
+}
