@@ -1,0 +1,60 @@
+{
+  "title": "এক বছর পর দেশের বাজারে কমল সোনার দাম",
+  "description": "এক বছর পর দেশের বাজারে সোনার ভরি দুই লাখ টাকার নিচে নেমে এসেছে। সাধারণ ক্রেতাদের জন্য এটি কেমন প্রভাব ফেলছে, জেনে নিন বিস্তারিত।",
+  "tags": [
+    "সোনা",
+    "সোনার দাম",
+    "Gold Price BD",
+    "বাংলাদেশ",
+    "বাজারদর",
+    "Gold Rate",
+    "অর্থনীতি",
+    "Ajker Khobor",
+    "Gold Price Update"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "এক বছর পর দেশের বাজারে সোনার ভরি দুই লাখ টাকার নিচে নেমেছে। কিন্তু আসল কথা হলো, এই কমা কি স্থায়ী হবে?",
+      "screen_text": "এক বছর পর দেশের বাজারে সোনার ভরি",
+      "highlight": "",
+      "visual_query": "gold jewelry in display case"
+    },
+    {
+      "kind": "step",
+      "narration": "গত এক বছর ধরে সোনার বাজার ছিল সাধারণ মানুষের নাগালের বাইরে। এবার দাম কমে দুই লাখ টাকার নিচে এসেছে।",
+      "screen_text": "গত এক বছর ধরে সোনার বাজার ছিল",
+      "highlight": "",
+      "visual_query": "taka currency notes stack macro"
+    },
+    {
+      "kind": "step",
+      "narration": "আন্তর্জাতিক বাজারের সঙ্গে সামঞ্জস্য রেখে স্থানীয় বাজারেও সোনার দামের এই পরিবর্তন দেখা যাচ্ছে।",
+      "screen_text": "আন্তর্জাতিক বাজারের সঙ্গে সামঞ্জস্য রেখে স্থানীয় বাজারেও",
+      "highlight": "",
+      "visual_query": "world globe spinning slowly"
+    },
+    {
+      "kind": "tip",
+      "narration": "গহনা কেনার পরিকল্পনা থাকলে বর্তমান বাজারদর যাচাই করে তবেই সিদ্ধান্ত নিন।",
+      "screen_text": "গহনা কেনার পরিকল্পনা থাকলে বর্তমান বাজারদর যাচাই",
+      "highlight": "",
+      "visual_query": "calculator on wooden table"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজারের গতিবিধি লক্ষ্য রেখে প্রয়োজন অনুযায়ী সঠিক সিদ্ধান্ত নিন।",
+      "screen_text": "বাজারের গতিবিধি লক্ষ্য রেখে প্রয়োজন অনুযায়ী সঠিক",
+      "highlight": "",
+      "visual_query": "empty traditional storefront at dusk"
+    }
+  ],
+  "sources": [
+    "bdnews24.com"
+  ],
+  "facts": [
+    "এক বছর পর ২ লাখ টাকার নিচে নামল সোনার ভরি (সূত্র: bdnews24.com, Sat, 21 Nov 2026)"
+  ],
+  "fact_check": []
+}
