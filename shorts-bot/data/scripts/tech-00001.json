@@ -1,0 +1,72 @@
+{
+  "title": "এআই কীভাবে আপনার প্রম্পট বুঝে উত্তর দেয়?",
+  "description": "কৃত্রিম বুদ্ধিমত্তা বা লার্জ ল্যাঙ্গুয়েজ মডেলগুলো কীভাবে মানুষের প্রম্পট বিশ্লেষণ করে ধাপে ধাপে উত্তর তৈরি করে, তার মূল কার্যপদ্ধতি জেনে নিন খুব সহজে।",
+  "tags": [
+    "প্রযুক্তি",
+    "কৃত্রিম বুদ্ধিমত্তা",
+    "এআই",
+    "technology",
+    "artificial intelligence",
+    "AI",
+    "LLM",
+    "বাংলা প্রযুক্তি",
+    "টেক নিউজ",
+    "tech facts"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "এআই চ্যাটবটকে একটা প্রশ্ন লিখলেই ও কীভাবে এত নিখুঁত উত্তর সাজায় বলুন তো?",
+      "screen_text": "এআই চ্যাটবটকে একটা প্রশ্ন লিখলেই ও কীভাবে",
+      "highlight": "",
+      "visual_query": "glowing computer server rack data center"
+    },
+    {
+      "kind": "step",
+      "narration": "আপনার লেখা প্রম্পট প্রথমে ছোট ছোট টুকরো বা টোকেনে ভাগ করে নেয় এই সিস্টেম।",
+      "screen_text": "আপনার লেখা প্রম্পট প্রথমে ছোট ছোট টুকরো",
+      "highlight": "",
+      "visual_query": "matrix code scrolling on dark screen"
+    },
+    {
+      "kind": "step",
+      "narration": "এরপর আগের বিশাল ডেটার সাথে মিলিয়ে প্রতি মুহূর্তে হিসাব করে পরের শব্দটি কী হতে পারে।",
+      "screen_text": "এরপর আগের বিশাল ডেটার সাথে মিলিয়ে প্রতি",
+      "highlight": "",
+      "visual_query": "microprocessor chip abstract circuit board"
+    },
+    {
+      "kind": "step",
+      "narration": "কোনো জাদুকরী বুদ্ধি নয়, এটি মূলত বিশাল পরিমাণের গণিত ও সম্ভাবনার এক নিখুঁত খেলা।",
+      "screen_text": "কোনো জাদুকরী বুদ্ধি নয়, এটি মূলত বিশাল",
+      "highlight": "",
+      "visual_query": "binary code reflection on glass window"
+    },
+    {
+      "kind": "tip",
+      "narration": "তাই ভালো উত্তর পেতে যতটা সম্ভব পরিষ্কার ও নির্দিষ্ট করে আপনার প্রম্পট লিখুন।",
+      "screen_text": "তাই ভালো উত্তর পেতে যতটা সম্ভব পরিষ্কার",
+      "highlight": "",
+      "visual_query": "hands typing on backlit mechanical keyboard"
+    },
+    {
+      "kind": "outro",
+      "narration": "প্রযুক্তির পেছনের এই হিসাব-নিকাশ জানলে এআই ব্যবহার করা আরও সহজ হয়ে যায়।",
+      "screen_text": "প্রযুক্তির পেছনের এই হিসাব-নিকাশ জানলে এআই ব্যবহার",
+      "highlight": "",
+      "visual_query": "modern empty office desk with monitor"
+    }
+  ],
+  "sources": [
+    "Banglar Alo News",
+    "Rupali Bangladesh"
+  ],
+  "facts": [
+    "এসআরবি-৯ এর অ'ভি'যা'নে সুনামগঞ্জ থেকে ৯৫ পিস ই'য়া'বা ট্যাবলেটসহ ০১ জন মা'দ'ক ব্যবসায়ী গ্রে'ফ'তা'র (সূত্র: Banglar Alo News, Sun, 22 Nov 2026)",
+    "শেরপুরে মা'দ'ক বি'রো'ধী সমাবেশে মা'দ'কে না করার জন্য পুলিশকে তথ্য দেওয়ার আহ্বান ওসি সাহেবের (সূত্র: Banglar Alo News, Sun, 22 Nov 2026)",
+    "পঞ্চগড়ের তেঁতুলিয়ায় পাঁচ বছরের শিশু ধ'র্ষ'ণ মামলার প্রধান আসামিকে ঢাকা থেকে গ্রে'ফ'তা'র করেছে এসআরবি। (সূত্র: Banglar Alo News, Sun, 22 Nov 2026)",
+    "তানোরে দর্শনার্থীদের আকর্ষণ করছে রহস্যেঘেরা বট পাকুড় যুগলবন্দি গাছ (সূত্র: Rupali Bangladesh, Mon, 23 Nov 2026)"
+  ],
+  "fact_check": []
+}
