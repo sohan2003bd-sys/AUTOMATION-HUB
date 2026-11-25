@@ -1,0 +1,70 @@
+{
+  "title": "পাবলিক ওয়াইফাই ব্যবহারের জরুরি নিরাপত্তা কৌশল",
+  "description": "ক্যাফে বা এয়ারপোর্টের ফ্রি পাবলিক ওয়াইফাই ব্যবহার করার সময় নিজের স্মার্টফোন ও ব্রাউজিং নিরাপদ রাখার তিনটি জরুরি কৌশল জেনে নিন। সাইবার ঝুঁকি এড়িয়ে চলুন নিরাপদে।",
+  "tags": [
+    "পাবলিক ওয়াইফাই",
+    "সাইবার নিরাপত্তা",
+    "স্মার্টফোন সুরক্ষা",
+    "প্রযুক্তি",
+    "টেক টিপস",
+    "cyber security",
+    "public wifi safety",
+    "smartphone security",
+    "tech tips bangla"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "ফ্রি পাবলিক ওয়াইফাই মানেই কি ইন্টারনেট একদম নিরাপদ? ভুলেও এই ধারণা মনে রাখবেন না।",
+      "screen_text": "ফ্রি পাবলিক ওয়াইফাই মানেই কি ইন্টারনেট একদম",
+      "highlight": "",
+      "visual_query": "smartphone screen dark room"
+    },
+    {
+      "kind": "step",
+      "narration": "খোলা ওয়াইফাই নেটওয়ার্কে হ্যাকারদের পক্ষে আপনার ডেটা দেখা খুব সহজ।",
+      "screen_text": "খোলা ওয়াইফাই নেটওয়ার্কে হ্যাকারদের পক্ষে আপনার ডেটা",
+      "highlight": "",
+      "visual_query": "modern router flashing lights"
+    },
+    {
+      "kind": "step",
+      "narration": "এতে আপনার পাসওয়ার্ড ও ব্যাংক অ্যাকাউন্ট ঝুঁকির মুখে পড়তে পারে।",
+      "screen_text": "এতে আপনার পাসওয়ার্ড ও ব্যাংক অ্যাকাউন্ট ঝুঁকির",
+      "highlight": "",
+      "visual_query": "empty cafe wooden table"
+    },
+    {
+      "kind": "tip",
+      "narration": "এক, পাবলিক নেটওয়ার্কে সংবেদনশীল কাজ যেমন অনলাইন ব্যাংকিং এড়িয়ে চলুন।",
+      "screen_text": "এক, পাবলিক নেটওয়ার্কে সংবেদনশীল কাজ যেমন অনলাইন",
+      "highlight": "",
+      "visual_query": "close up modern padlock"
+    },
+    {
+      "kind": "tip",
+      "narration": "দুই, ব্যবহারের সময় একটি নির্ভরযোগ্য ভার্চুয়াল প্রাইভেট নেটওয়ার্ক বা ভিপিএন চালু রাখুন।",
+      "screen_text": "দুই, ব্যবহারের সময় একটি নির্ভরযোগ্য ভার্চুয়াল প্রাইভেট",
+      "highlight": "",
+      "visual_query": "server rack blinking lights"
+    },
+    {
+      "kind": "tip",
+      "narration": "তিন, কাজ শেষ হলে ওয়াইফাই অটো-কানেক্ট অপশন বন্ধ করে দিন।",
+      "screen_text": "তিন, কাজ শেষ হলে ওয়াইফাই অটো-কানেক্ট অপশন",
+      "highlight": "",
+      "visual_query": "settings icon digital screen"
+    },
+    {
+      "kind": "outro",
+      "narration": "সচেতন থাকুন, আপনার ডিজিটাল ডেটার সুরক্ষা আপনার নিজের হাতেই।",
+      "screen_text": "সচেতন থাকুন, আপনার ডিজিটাল ডেটার সুরক্ষা আপনার",
+      "highlight": "",
+      "visual_query": "city skyline dusk aerial"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
