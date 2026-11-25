@@ -1,0 +1,64 @@
+{
+  "title": "ইন্টারভিউতে দুর্বলতার ইতিবাচক উত্তর",
+  "description": "চাকরির ইন্টারভিউতে নিজের দুর্বলতা নিয়ে কথা বলার সঠিক কৌশল জেনে নিন। পেশাদার ও ইতিবাচকভাবে উত্তর দিয়ে নিজেকে এগিয়ে রাখুন।",
+  "tags": [
+    "job interview",
+    "career tips",
+    "চাকরির ইন্টারভিউ",
+    "ক্যারিয়ার টিপস",
+    "interview tips",
+    "weakness in interview",
+    "job preparation",
+    "চাকরি",
+    "interview questions",
+    "পেশাদারিত্ব"
+  ],
+  "tone": "warm",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "ইন্টারভিউতে নিজের দুর্বলতা বলতে গিয়ে অনেকেই সরাসরি নিজের সততার বড়াই করেন, যা আসলে বড় ভুল।",
+      "screen_text": "ইন্টারভিউতে নিজের দুর্বলতা বলতে গিয়ে অনেকেই সরাসরি",
+      "highlight": "",
+      "visual_query": "desk with open notebook and pen"
+    },
+    {
+      "kind": "step",
+      "narration": "প্রচলিত ধারণা হলো নিজের কোনো বড় ঘাটতি স্বীকার করা বোকামি, কিন্তু নিয়োগকর্তারা নিখুঁত মানুষ খোঁজেন না।",
+      "screen_text": "প্রচলিত ধারণা হলো নিজের কোনো বড় ঘাটতি",
+      "highlight": "",
+      "visual_query": "modern office building exterior daytime"
+    },
+    {
+      "kind": "step",
+      "narration": "তারা দেখতে চান আপনি নিজের সীমাবদ্ধতা কতখানি বোঝেন এবং তা কাটিয়ে উঠতে কী করছেন।",
+      "screen_text": "তারা দেখতে চান আপনি নিজের সীমাবদ্ধতা কতখানি",
+      "highlight": "",
+      "visual_query": "closed laptop on wooden table"
+    },
+    {
+      "kind": "tip",
+      "narration": "এমন একটি বাস্তব দক্ষতা বলুন যা আপনি ইতিমধ্যে উন্নত করার চেষ্টা করছেন।",
+      "screen_text": "এমন একটি বাস্তব দক্ষতা বলুন যা আপনি",
+      "highlight": "",
+      "visual_query": "person typing on laptop keyboard close up"
+    },
+    {
+      "kind": "tip",
+      "narration": "যেমন, বড় জমায়েতে কথা বলতে জড়তা ছিল, তাই এখন প্রেজেন্টেশন প্র্যাকটিস করে তা কাটাচ্ছি।",
+      "screen_text": "যেমন, বড় জমায়েতে কথা বলতে জড়তা ছিল,",
+      "highlight": "",
+      "visual_query": "empty conference room interior"
+    },
+    {
+      "kind": "outro",
+      "narration": "দুর্বলতা লুকানোর চেয়ে উন্নতির চেষ্টা দেখানোই পেশাদার প্রার্থীর আসল পরিচয়।",
+      "screen_text": "দুর্বলতা লুকানোর চেয়ে উন্নতির চেষ্টা দেখানোই পেশাদার",
+      "highlight": "",
+      "visual_query": "sunrise over city skyline wide shot"
+    }
+  ],
+  "sources": [],
+  "facts": [],
+  "fact_check": []
+}
