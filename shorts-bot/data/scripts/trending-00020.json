@@ -1,0 +1,61 @@
+{
+  "title": "দেশের বাজারে আবার বাড়ল সোনার দাম",
+  "description": "দেশের বাজারে স্বর্ণের দাম নতুন করে সমন্বয় করা হয়েছে। প্রতি ভরির নতুন দাম কত হলো এবং এর ফলে সাধারণ ক্রেতাদের কী জানা দরকার, তা জেনে নিন এই ভিডিওতে।",
+  "tags": [
+    "সোনার দাম",
+    "বাংলাদেশ গোল্ড প্রাইস",
+    "Gold Price in Bangladesh",
+    "স্বর্ণের বাজার",
+    "Ajker Sonar Dam",
+    "gold rate bd",
+    "econmy news bangla",
+    "سونার দাম",
+    "gold price update",
+    "বাজারদর"
+  ],
+  "tone": "serious",
+  "scenes": [
+    {
+      "kind": "hook",
+      "narration": "বিয়ে বা উৎসবের প্রস্তুতি নিচ্ছেন? জানেন কি, দেশের বাজারে আবার বাড়ল সোনার দাম?",
+      "screen_text": "বিয়ে বা উৎসবের প্রস্তুতি নিচ্ছেন? জানেন কি,",
+      "highlight": "",
+      "visual_query": "close up gold jewelry"
+    },
+    {
+      "kind": "step",
+      "narration": "নতুন সিদ্ধান্ত অনুযায়ী, ভালো মানের প্রতি ভরি সোনার দাম আগের চেয়ে বাড়ানো হয়েছে।",
+      "screen_text": "নতুন সিদ্ধান্ত অনুযায়ী, ভালো মানের প্রতি ভরি",
+      "highlight": "",
+      "visual_query": "jeweller shop showcase interior"
+    },
+    {
+      "kind": "step",
+      "narration": "বিশ্ববাজারের সঙ্গে সামঞ্জস্য রাখতে এবং স্থানীয় বুলিয়ন মার্কেটের দামের ওপর ভিত্তি করে এই মূল্য নির্ধারণ করা হয়।",
+      "screen_text": "বিশ্ববাজারের সঙ্গে সামঞ্জস্য রাখতে এবং স্থানীয় বুলিয়ন",
+      "highlight": "",
+      "visual_query": "empty stock market board"
+    },
+    {
+      "kind": "tip",
+      "narration": "অলংকার কেনার পরিকল্পনা থাকলে কেনার আগে বর্তমান বাজারদর ও পাকা রসিদ যাচাই করে নেওয়া নিরাপদ।",
+      "screen_text": "অলংকার কেনার পরিকল্পনা থাকলে কেনার আগে বর্তমান",
+      "highlight": "",
+      "visual_query": "calculator and cash receipt"
+    },
+    {
+      "kind": "outro",
+      "narration": "বাজেট ঠিক রাখতে বড় কেনাকাটার আগে প্রতিদিনের বাজারদর খেয়াল রাখুন।",
+      "screen_text": "বাজেট ঠিক রাখতে বড় কেনাকাটার আগে প্রতিদিনের",
+      "highlight": "",
+      "visual_query": "traditional wooden shop counter"
+    }
+  ],
+  "sources": [
+    "Ekushey TV"
+  ],
+  "facts": [
+    "বাড়লো স্বর্ণের দাম, ভরি যত (সূত্র: Ekushey TV, Thu, 26 Nov 2026)"
+  ],
+  "fact_check": []
+}
